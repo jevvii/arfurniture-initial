@@ -15,7 +15,7 @@ router.get('/:userId',
     const carts = req.app.locals.collections.carts
     const products = req.app.locals.collections.products
     
-    let cart = await carts.findOne({ userId: new ObjectId(req.params.userId) })
+    let cart = await carts.findOne({ userId: (ObjectId.isValid(req.params.userId) ? new ObjectId(req.params.userId) : req.params.userId) })
     
     // If no cart exists, return empty cart
     if (!cart) {
@@ -26,7 +26,7 @@ router.get('/:userId',
     // Populate product details for each cart item
     const populatedItems = await Promise.all(
       cart.items.map(async (item) => {
-        const product = await products.findOne({ _id: new ObjectId(item.productId) })
+        const product = await products.findOne({ _id: (ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : item.productId) })
         
         if (!product) {
           logger.warn('Product not found in cart item', { 
@@ -89,7 +89,7 @@ router.post('/:userId/items',
     const products = req.app.locals.collections.products
     
     // Verify product exists
-    const product = await products.findOne({ _id: new ObjectId(productId) })
+    const product = await products.findOne({ _id: (ObjectId.isValid(productId) ? new ObjectId(productId) : productId) })
     if (!product) {
       logger.warn('Product not found', { requestId: req.requestId, productId })
       return res.status(404).json({ error: 'Product not found' })
@@ -104,7 +104,7 @@ router.post('/:userId/items',
       }
     }
     
-    const userId = new ObjectId(req.params.userId)
+    const userId = (ObjectId.isValid(req.params.userId) ? new ObjectId(req.params.userId) : req.params.userId)
     
     // Check if cart exists
     let cart = await carts.findOne({ userId })
@@ -115,7 +115,7 @@ router.post('/:userId/items',
       await carts.insertOne({
         userId,
         items: [{
-          productId: new ObjectId(productId),
+          productId: (ObjectId.isValid(productId) ? new ObjectId(productId) : productId),
           variantId: variantId || null,
           quantity: Number(quantity)
         }],
@@ -142,7 +142,7 @@ router.post('/:userId/items',
         await carts.updateOne(
           { 
             userId,
-            'items.productId': new ObjectId(productId),
+            'items.productId': (ObjectId.isValid(productId) ? new ObjectId(productId) : productId),
             'items.variantId': variantId || null
           },
           { 
@@ -159,7 +159,7 @@ router.post('/:userId/items',
           { 
             $push: { 
               items: {
-                productId: new ObjectId(productId),
+                productId: (ObjectId.isValid(productId) ? new ObjectId(productId) : productId),
                 variantId: variantId || null,
                 quantity: Number(quantity)
               }
@@ -199,8 +199,8 @@ router.put('/:userId/items/:productId',
     })
     
     const carts = req.app.locals.collections.carts
-    const userId = new ObjectId(req.params.userId)
-    const productId = new ObjectId(req.params.productId)
+    const userId = (ObjectId.isValid(req.params.userId) ? new ObjectId(req.params.userId) : req.params.userId)
+    const productId = (ObjectId.isValid(req.params.productId) ? new ObjectId(req.params.productId) : req.params.productId)
     
     // Update the specific item's quantity
     const result = await carts.updateOne(
@@ -252,8 +252,8 @@ router.delete('/:userId/items/:productId',
     })
     
     const carts = req.app.locals.collections.carts
-    const userId = new ObjectId(req.params.userId)
-    const productId = new ObjectId(req.params.productId)
+    const userId = (ObjectId.isValid(req.params.userId) ? new ObjectId(req.params.userId) : req.params.userId)
+    const productId = (ObjectId.isValid(req.params.productId) ? new ObjectId(req.params.productId) : req.params.productId)
     
     const result = await carts.updateOne(
       { userId },
@@ -294,7 +294,7 @@ router.delete('/:userId',
     logger.request(req, `Clearing cart for user: ${req.params.userId}`)
     
     const carts = req.app.locals.collections.carts
-    const userId = new ObjectId(req.params.userId)
+    const userId = (ObjectId.isValid(req.params.userId) ? new ObjectId(req.params.userId) : req.params.userId)
     
     const result = await carts.updateOne(
       { userId },

@@ -16,7 +16,7 @@ router.get('/:userId', asyncHandler(async (req, res) => {
   logger.request(req, `Fetching addresses for user: ${userId}`)
   
   const users = req.app.locals.collections.users
-  const user = await users.findOne({ _id: new ObjectId(userId) })
+  const user = await users.findOne({ _id: (ObjectId.isValid(userId) ? new ObjectId(userId) : userId) })
   
   if (!user) {
     logger.warn('User not found for address fetch', { requestId: req.requestId, userId })
@@ -46,7 +46,7 @@ router.post('/:userId',
     
     const users = req.app.locals.collections.users
     const result = await users.updateOne(
-      { _id: new ObjectId(userId) },
+      { _id: (ObjectId.isValid(userId) ? new ObjectId(userId) : userId) },
       { $push: { addresses: newAddress } }
     )
     
@@ -90,7 +90,7 @@ router.put('/:userId/:addressId',
     
     const updateResult = await users.updateOne(
       { 
-        _id: new ObjectId(userId), 
+        _id: (ObjectId.isValid(userId) ? new ObjectId(userId) : userId), 
         "addresses.id": addressId 
       },
       { $set: setFields }
@@ -105,7 +105,7 @@ router.put('/:userId/:addressId',
     // Return the updated address - we need to fetch it again or just return the data + id
     // Fetching is better to be sure
     const user = await users.findOne(
-        { _id: new ObjectId(userId) },
+        { _id: (ObjectId.isValid(userId) ? new ObjectId(userId) : userId) },
         { projection: { addresses: { $elemMatch: { id: addressId } } } }
     )
     
@@ -125,7 +125,7 @@ router.delete('/:userId/:addressId',
     
     const users = req.app.locals.collections.users
     const result = await users.updateOne(
-      { _id: new ObjectId(userId) },
+      { _id: (ObjectId.isValid(userId) ? new ObjectId(userId) : userId) },
       { $pull: { addresses: { id: addressId } } }
     )
     

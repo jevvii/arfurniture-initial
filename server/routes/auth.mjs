@@ -113,7 +113,7 @@ router.put('/update-profile',
     }
 
     const users = req.app.locals.collections.users
-    const user = await users.findOne({ _id: new ObjectId(userId) })
+    const user = await users.findOne({ _id: (ObjectId.isValid(userId) ? new ObjectId(userId) : userId) })
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' })

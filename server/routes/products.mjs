@@ -32,7 +32,7 @@ router.get('/:id',
     logger.request(req, `Fetching product: ${req.params.id}`)
     
     const products = req.app.locals.collections.products
-    const product = await products.findOne({ _id: new ObjectId(req.params.id) })
+    const product = await products.findOne({ _id: (ObjectId.isValid(req.params.id) ? new ObjectId(req.params.id) : req.params.id) })
     
     if (!product) {
       logger.warn('Product not found', { requestId: req.requestId, productId: req.params.id })
@@ -84,7 +84,7 @@ router.put('/:id',
     })
     
     const products = req.app.locals.collections.products
-    const existingProduct = await products.findOne({ _id: new ObjectId(req.params.id) })
+    const existingProduct = await products.findOne({ _id: (ObjectId.isValid(req.params.id) ? new ObjectId(req.params.id) : req.params.id) })
     
     if (!existingProduct) {
       logger.warn('Product not found for update', { requestId: req.requestId, productId: req.params.id })
@@ -197,11 +197,11 @@ router.put('/:id',
     
     // Update product in database
     await products.updateOne(
-      { _id: new ObjectId(req.params.id) },
+      { _id: (ObjectId.isValid(req.params.id) ? new ObjectId(req.params.id) : req.params.id) },
       { $set: updates }
     )
     
-    const updated = await products.findOne({ _id: new ObjectId(req.params.id) })
+    const updated = await products.findOne({ _id: (ObjectId.isValid(req.params.id) ? new ObjectId(req.params.id) : req.params.id) })
     
     logger.success(`Product updated: ${updated.name}`, { 
       requestId: req.requestId,
@@ -220,7 +220,7 @@ router.delete('/:id',
     logger.request(req, `Deleting product: ${req.params.id}`)
     
     const products = req.app.locals.collections.products
-    const product = await products.findOne({ _id: new ObjectId(req.params.id) })
+    const product = await products.findOne({ _id: (ObjectId.isValid(req.params.id) ? new ObjectId(req.params.id) : req.params.id) })
     
     if (!product) {
       logger.warn('Product not found for deletion', { requestId: req.requestId, productId: req.params.id })
@@ -228,7 +228,7 @@ router.delete('/:id',
     }
     
     // Delete from database
-    await products.deleteOne({ _id: new ObjectId(req.params.id) })
+    await products.deleteOne({ _id: (ObjectId.isValid(req.params.id) ? new ObjectId(req.params.id) : req.params.id) })
     
     // Delete product folders
     const supabase = getSupabaseClient()

@@ -46,7 +46,7 @@ export const validatePassword = (req, res, next) => {
   next()
 }
 
-// ObjectId validation
+// ObjectId or String ID validation (relaxed for Supabase)
 export const validateObjectId = (paramName = 'id') => {
   return (req, res, next) => {
     const id = req.params[paramName]
@@ -55,15 +55,6 @@ export const validateObjectId = (paramName = 'id') => {
       return res.status(400).json({ 
         error: `${paramName} is required`,
         field: paramName
-      })
-    }
-    
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).json({ 
-        error: `Invalid ${paramName} format. Must be a valid MongoDB ObjectId.`,
-        field: paramName,
-        provided: id,
-        example: '507f1f77bcf86cd799439011'
       })
     }
     

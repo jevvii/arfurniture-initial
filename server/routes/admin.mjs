@@ -135,7 +135,7 @@ router.put('/staff/:id',
     const adminsCollection = req.app.locals.collections.admins
     
     // Check if admin exists
-    const admin = await adminsCollection.findOne({ _id: new ObjectId(id) })
+    const admin = await adminsCollection.findOne({ _id: (ObjectId.isValid(id) ? new ObjectId(id) : id) })
     if (!admin) {
       return res.status(404).json({ error: 'Staff member not found' })
     }
@@ -149,7 +149,7 @@ router.put('/staff/:id',
     if (email || username) {
       const existing = await adminsCollection.findOne({ 
         $and: [
-          { _id: { $ne: new ObjectId(id) } }, // Exclude current user
+          { _id: { $ne: (ObjectId.isValid(id) ? new ObjectId(id) : id) } }, // Exclude current user
           { $or: [
             { email: (email || '').toLowerCase() }, 
             { username: (username || '').toLowerCase() }
@@ -181,11 +181,11 @@ router.put('/staff/:id',
     }
 
     await adminsCollection.updateOne(
-      { _id: new ObjectId(id) },
+      { _id: (ObjectId.isValid(id) ? new ObjectId(id) : id) },
       { $set: updateData }
     )
     
-    const updatedAdmin = await adminsCollection.findOne({ _id: new ObjectId(id) })
+    const updatedAdmin = await adminsCollection.findOne({ _id: (ObjectId.isValid(id) ? new ObjectId(id) : id) })
     
     logger.success(`Staff member updated: ${id}`, { requestId: req.requestId })
     
@@ -205,7 +205,7 @@ router.delete('/staff/:id', asyncHandler(async (req, res) => {
 
   const adminsCollection = req.app.locals.collections.admins
   
-  const result = await adminsCollection.deleteOne({ _id: new ObjectId(id) })
+  const result = await adminsCollection.deleteOne({ _id: (ObjectId.isValid(id) ? new ObjectId(id) : id) })
   
   if (result.deletedCount === 0) {
     return res.status(404).json({ error: 'Staff member not found' })

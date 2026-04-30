@@ -156,7 +156,7 @@ app.use(errorHandler)
 
 const port = process.env.PORT || 4000
 
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   logger.success(`Server listening on http://localhost:${port}`)
   logger.info('Available routes:')
   logger.info('  - POST   /api/auth/signup')

@@ -47,7 +47,7 @@ router.patch('/:id/read', asyncHandler(async (req, res) => {
     const notifications = req.app.locals.collections.notifications
 
     const result = await notifications.updateOne(
-        { _id: new ObjectId(req.params.id) },
+        { _id: (ObjectId.isValid(req.params.id) ? new ObjectId(req.params.id) : req.params.id) },
         { $set: { isRead: true, updatedAt: new Date() } }
     )
 

@@ -43,7 +43,7 @@ router.put('/:id',
     
     const banners = req.app.locals.collections.banners
     const result = await banners.updateOne(
-      { _id: new ObjectId(req.params.id) },
+      { _id: (ObjectId.isValid(req.params.id) ? new ObjectId(req.params.id) : req.params.id) },
       { $set: updates }
     )
     
@@ -52,7 +52,7 @@ router.put('/:id',
       return res.status(404).json({ error: 'Banner not found' })
     }
     
-    const updated = await banners.findOne({ _id: new ObjectId(req.params.id) })
+    const updated = await banners.findOne({ _id: (ObjectId.isValid(req.params.id) ? new ObjectId(req.params.id) : req.params.id) })
     
     logger.success(`Banner updated: ${req.params.id}`, { requestId: req.requestId, bannerId: req.params.id })
     return res.json({ ...updated, _id: updated._id.toString() })
@@ -66,7 +66,7 @@ router.delete('/:id',
     logger.request(req, `Deleting banner: ${req.params.id}`)
     
     const banners = req.app.locals.collections.banners
-    const result = await banners.deleteOne({ _id: new ObjectId(req.params.id) })
+    const result = await banners.deleteOne({ _id: (ObjectId.isValid(req.params.id) ? new ObjectId(req.params.id) : req.params.id) })
     
     if (result.deletedCount === 0) {
       logger.warn('Banner not found for deletion', { requestId: req.requestId, bannerId: req.params.id })

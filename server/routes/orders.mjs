@@ -42,7 +42,7 @@ router.post('/', asyncHandler(async (req, res) => {
   const stockUpdates = []
 
   for (const item of req.body.items) {
-    const product = await products.findOne({ _id: new ObjectId(item.productId) })
+    const product = await products.findOne({ _id: (ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : item.productId) })
 
     if (!product) {
       logger.warn('Product not found in order', { requestId: req.requestId, productId: item.productId })
@@ -76,7 +76,7 @@ router.post('/', asyncHandler(async (req, res) => {
 
       // Prepare variant stock update
       stockUpdates.push({
-        productId: new ObjectId(item.productId),
+        productId: (ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : item.productId),
         variantId: item.variantId,
         quantity: item.quantity
       })
@@ -97,7 +97,7 @@ router.post('/', asyncHandler(async (req, res) => {
 
       // Prepare product stock update
       stockUpdates.push({
-        productId: new ObjectId(item.productId),
+        productId: (ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : item.productId),
         variantId: null,
         quantity: item.quantity
       })
@@ -202,7 +202,7 @@ router.patch('/:id/status',
     const notifications = req.app.locals.collections.notifications
 
     // Get order to find userId
-    const order = await orders.findOne({ _id: new ObjectId(req.params.id) })
+    const order = await orders.findOne({ _id: (ObjectId.isValid(req.params.id) ? new ObjectId(req.params.id) : req.params.id) })
 
     if (!order) {
       logger.warn('Order not found for status update', { requestId: req.requestId, orderId: req.params.id })
@@ -210,7 +210,7 @@ router.patch('/:id/status',
     }
 
     const result = await orders.updateOne(
-      { _id: new ObjectId(req.params.id) },
+      { _id: (ObjectId.isValid(req.params.id) ? new ObjectId(req.params.id) : req.params.id) },
       { $set: { status, updatedAt: new Date() } }
     )
 
@@ -249,7 +249,7 @@ router.patch('/:id/status',
       try {
         const users = req.app.locals.collections.users;
         // userId might be string or ObjectId depending on auth. Fallback logic:
-        const userQuery = ObjectId.isValid(order.userId) ? { _id: new ObjectId(order.userId) } : { _id: order.userId };
+        const userQuery = ObjectId.isValid(order.userId) ? { _id: (ObjectId.isValid(order.userId) ? new ObjectId(order.userId) : order.userId) } : { _id: order.userId };
         const user = await users.findOne(userQuery);
         if (user && user.email) {
           customerEmail = user.email;
@@ -328,7 +328,7 @@ router.patch('/:id/cancel',
     const orders = req.app.locals.collections.orders
     const products = req.app.locals.collections.products
 
-    const order = await orders.findOne({ _id: new ObjectId(req.params.id) })
+    const order = await orders.findOne({ _id: (ObjectId.isValid(req.params.id) ? new ObjectId(req.params.id) : req.params.id) })
 
     if (!order) {
       return res.status(404).json({ error: 'Order not found' })
@@ -342,7 +342,7 @@ router.patch('/:id/cancel',
 
     // update status
     await orders.updateOne(
-      { _id: new ObjectId(req.params.id) },
+      { _id: (ObjectId.isValid(req.params.id) ? new ObjectId(req.params.id) : req.params.id) },
       { $set: { status: 'cancelled', updatedAt: new Date() } }
     )
 
@@ -351,7 +351,7 @@ router.patch('/:id/cancel',
       if (item.variantId) {
         await products.updateOne(
           {
-            _id: new ObjectId(item.productId),
+            _id: (ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : item.productId),
             'variants.id': item.variantId
           },
           {
@@ -360,7 +360,7 @@ router.patch('/:id/cancel',
         )
       } else {
         await products.updateOne(
-          { _id: new ObjectId(item.productId) },
+          { _id: (ObjectId.isValid(item.productId) ? new ObjectId(item.productId) : item.productId) },
           { $inc: { stock: item.quantity } }
         )
       }
@@ -377,7 +377,7 @@ router.get('/:id',
     logger.request(req, `Fetching order: ${req.params.id}`)
 
     const orders = req.app.locals.collections.orders
-    const order = await orders.findOne({ _id: new ObjectId(req.params.id) })
+    const order = await orders.findOne({ _id: (ObjectId.isValid(req.params.id) ? new ObjectId(req.params.id) : req.params.id) })
 
     if (!order) {
       logger.warn('Order not found', { requestId: req.requestId, orderId: req.params.id })
@@ -402,7 +402,7 @@ router.delete('/:id',
     logger.request(req, `Deleting order: ${req.params.id}`)
 
     const orders = req.app.locals.collections.orders
-    const result = await orders.deleteOne({ _id: new ObjectId(req.params.id) })
+    const result = await orders.deleteOne({ _id: (ObjectId.isValid(req.params.id) ? new ObjectId(req.params.id) : req.params.id) })
 
     if (result.deletedCount === 0) {
       logger.warn('Order not found for deletion', { requestId: req.requestId, orderId: req.params.id })
