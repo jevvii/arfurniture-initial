@@ -330,17 +330,47 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="hidden md:block border-t border-slate-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <nav className="flex justify-center items-center space-x-8 h-12">
-                {SHOP_CATEGORIES.map((cat) => (
-                  <button
-                    key={cat.label}
-                    onClick={cat.action}
-                    className="text-sm font-medium tracking-wide text-slate-600 hover:text-indigo-600 hover:underline decoration-2 underline-offset-4 transition-all"
-                  >
-                    {cat.label}
-                  </button>
-                ))}
+                {SHOP_CATEGORIES.map((cat) => {
+                  // Determine if this tab is active
+                  let isActive = false;
+                  
+                  if (cat.label === 'Home') {
+                    isActive = location.pathname === '/' && !searchParams.has('category') && !searchParams.has('filter') && !searchParams.has('q');
+                  } else if (cat.label === 'New Arrivals') {
+                    isActive = location.pathname === '/' && searchParams.get('filter') === 'new';
+                  } else if (cat.label === 'Featured') {
+                    isActive = location.pathname === '/' && searchParams.get('filter') === 'featured';
+                  } else if (cat.label === 'Sale') {
+                    isActive = location.pathname === '/' && searchParams.get('filter') === 'sale';
+                  } else if (cat.label === 'About Us') {
+                    isActive = location.pathname === '/about';
+                  } else {
+                    isActive = location.pathname === '/' && searchParams.get('category') === cat.label;
+                  }
+
+                  return (
+                    <button
+                      key={cat.label}
+                      onClick={cat.action}
+                      className={`text-sm font-medium tracking-wide transition-all ${
+                        isActive 
+                          ? 'text-indigo-600 underline decoration-2 underline-offset-4' 
+                          : 'text-slate-600 hover:text-indigo-600 hover:underline decoration-2 underline-offset-4'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  );
+                })}
                 <span className="h-4 w-px bg-slate-300 mx-2"></span>
-                <Link to="/" className="text-sm font-medium tracking-wide text-indigo-600 hover:underline decoration-2 underline-offset-4">
+                <Link 
+                  to="/" 
+                  className={`text-sm font-medium tracking-wide transition-all ${
+                    location.pathname === '/' && !searchParams.has('category') && !searchParams.has('filter') && !searchParams.has('q')
+                      ? 'text-indigo-600 underline decoration-2 underline-offset-4'
+                      : 'text-indigo-600 hover:underline decoration-2 underline-offset-4'
+                  }`}
+                >
                   All Products
                 </Link>
               </nav>
