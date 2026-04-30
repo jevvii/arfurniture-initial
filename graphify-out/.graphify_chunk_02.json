@@ -1,0 +1,150 @@
+{
+  "nodes": [
+    {
+      "id": "img_contemporary_sofa_1764396554939_eta8m9_png",
+      "label": "1764396554939-eta8m9.png",
+      "type": "image_file",
+      "source_file": "products/images/contemporary-2-seater-fabric-sofa-with-wood-base/1764396554939-eta8m9.png"
+    },
+    {
+      "id": "contemporary_fabric_sofa",
+      "label": "Contemporary fabric sofa",
+      "type": "furniture"
+    },
+    {
+      "id": "light_gray_fabric_upholstery",
+      "label": "Light gray fabric upholstery",
+      "type": "material_finish"
+    },
+    {
+      "id": "wood_base_frame",
+      "label": "Wood-toned base frame",
+      "type": "structural_component"
+    },
+    {
+      "id": "tapered_sofa_legs",
+      "label": "Tapered legs",
+      "type": "leg_design"
+    },
+    {
+      "id": "pair_of_throw_pillows",
+      "label": "Two throw pillows",
+      "type": "accessory"
+    },
+    {
+      "id": "curved_armrests",
+      "label": "Curved armrests",
+      "type": "form_factor"
+    },
+    {
+      "id": "studio_light_gray_background",
+      "label": "Plain light-gray studio background",
+      "type": "scene"
+    },
+    {
+      "id": "two_seater_capacity",
+      "label": "Two-seater capacity",
+      "type": "capacity"
+    },
+    {
+      "id": "contemporary_style",
+      "label": "Contemporary style",
+      "type": "design_style"
+    }
+  ],
+  "edges": [
+    {
+      "source": "img_contemporary_sofa_1764396554939_eta8m9_png",
+      "target": "contemporary_fabric_sofa",
+      "relation": "depicts",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.99,
+      "source_file": "products/images/contemporary-2-seater-fabric-sofa-with-wood-base/1764396554939-eta8m9.png",
+      "source_location": "image",
+      "weight": 1.0
+    },
+    {
+      "source": "contemporary_fabric_sofa",
+      "target": "light_gray_fabric_upholstery",
+      "relation": "has_material_finish",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.95,
+      "source_file": "products/images/contemporary-2-seater-fabric-sofa-with-wood-base/1764396554939-eta8m9.png",
+      "source_location": "image",
+      "weight": 1.0
+    },
+    {
+      "source": "contemporary_fabric_sofa",
+      "target": "wood_base_frame",
+      "relation": "has_component",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.94,
+      "source_file": "products/images/contemporary-2-seater-fabric-sofa-with-wood-base/1764396554939-eta8m9.png",
+      "source_location": "image",
+      "weight": 1.0
+    },
+    {
+      "source": "contemporary_fabric_sofa",
+      "target": "tapered_sofa_legs",
+      "relation": "has_leg_design",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.96,
+      "source_file": "products/images/contemporary-2-seater-fabric-sofa-with-wood-base/1764396554939-eta8m9.png",
+      "source_location": "image",
+      "weight": 1.0
+    },
+    {
+      "source": "contemporary_fabric_sofa",
+      "target": "pair_of_throw_pillows",
+      "relation": "includes_accessory",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.97,
+      "source_file": "products/images/contemporary-2-seater-fabric-sofa-with-wood-base/1764396554939-eta8m9.png",
+      "source_location": "image",
+      "weight": 1.0
+    },
+    {
+      "source": "contemporary_fabric_sofa",
+      "target": "curved_armrests",
+      "relation": "has_form",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.93,
+      "source_file": "products/images/contemporary-2-seater-fabric-sofa-with-wood-base/1764396554939-eta8m9.png",
+      "source_location": "image",
+      "weight": 1.0
+    },
+    {
+      "source": "img_contemporary_sofa_1764396554939_eta8m9_png",
+      "target": "studio_light_gray_background",
+      "relation": "has_background",
+      "confidence": "EXTRACTED",
+      "confidence_score": 0.91,
+      "source_file": "products/images/contemporary-2-seater-fabric-sofa-with-wood-base/1764396554939-eta8m9.png",
+      "source_location": "image",
+      "weight": 1.0
+    },
+    {
+      "source": "contemporary_fabric_sofa",
+      "target": "two_seater_capacity",
+      "relation": "likely_capacity",
+      "confidence": "AMBIGUOUS",
+      "confidence_score": 0.63,
+      "source_file": "products/images/contemporary-2-seater-fabric-sofa-with-wood-base/1764396554939-eta8m9.png",
+      "source_location": "image",
+      "weight": 0.8
+    },
+    {
+      "source": "contemporary_fabric_sofa",
+      "target": "contemporary_style",
+      "relation": "has_style",
+      "confidence": "INFERRED",
+      "confidence_score": 0.84,
+      "source_file": "products/images/contemporary-2-seater-fabric-sofa-with-wood-base/1764396554939-eta8m9.png",
+      "source_location": "image",
+      "weight": 0.7
+    }
+  ],
+  "hyperedges": [],
+  "input_tokens": 302,
+  "output_tokens": 375
+}

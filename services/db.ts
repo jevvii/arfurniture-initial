@@ -2,7 +2,7 @@
 import { Product, Order, MarketingBanner, DashboardStats, CartItem, OrderItem } from '../types';
 
 // API Base URL - uses the auth server
-const API_BASE = (import.meta as any).env?.VITE_AUTH_API_BASE?.replace(/\/$/, '') || 'http://localhost:4000';
+const API_BASE = (import.meta as any).env?.VITE_AUTH_API_BASE?.replace(/\/$/, '') ?? 'http://localhost:4000';
 
 // Fallback data for when API is unavailable
 const FALLBACK_PRODUCTS: Product[] = [

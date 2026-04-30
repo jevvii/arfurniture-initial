@@ -6,9 +6,11 @@ export const CURRENCY = "₱";
 
 // Get API base URL from environment or construct it
 export const getApiBaseUrl = (): string => {
-  // In production (Vercel), use the env variable
+  // In production (Vercel), use the env variable if provided, else default to empty string
+  // In development, it will use the provided env or fallback to localhost
   const envBase = (import.meta as any).env?.VITE_AUTH_API_BASE;
-  if (envBase) {
+  
+  if (envBase !== undefined) {
     return envBase.replace(/\/$/, ''); // Remove trailing slash
   }
   

@@ -8,7 +8,7 @@ import { ColorPicker } from '../../components/ColorPicker';
 
 // Detect if running on localhost (laptop) vs dev tunnel (phone)
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const TUNNEL_URL = (import.meta as any).env?.VITE_AUTH_API_BASE?.replace(/\/$/, '') || 'http://localhost:4000';
+const TUNNEL_URL = (import.meta as any).env?.VITE_AUTH_API_BASE?.replace(/\/$/, '') ?? 'http://localhost:4000';
 
 // When on localhost: upload to localhost (fast, no size limits), save tunnel URL for mobile
 // When on phone/tunnel: must upload through tunnel (may hit size limits)

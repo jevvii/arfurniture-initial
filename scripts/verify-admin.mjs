@@ -1,22 +1,19 @@
-import { MongoClient } from 'mongodb'
 import dotenv from 'dotenv'
 import path from 'path'
+import { connectDatabase, getCollections, closeDatabase } from '../server/config/database.mjs'
 
 dotenv.config()
-if (!process.env.MONGODB_URI) {
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
   dotenv.config({ path: path.resolve(process.cwd(), '.env.local') })
 }
 
-const uri = process.env.MONGODB_URI
-if (!uri) {
-  console.error('MONGODB_URI is required in .env.local')
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required in .env.local')
   process.exit(1)
 }
 
-const client = new MongoClient(uri)
-await client.connect()
-const db = client.db('arecommerce')
-const admins = db.collection('admins')
+await connectDatabase()
+const { admins } = getCollections()
 
 console.log('Checking for admin...')
 const admin = await admins.findOne({ email: 'admin@arfurniture.com' })
@@ -33,4 +30,4 @@ if (admin) {
   console.log('\n⚠ No admin found! Run: npm run seed-superadmin')
 }
 
-await client.close()
+await closeDatabase()

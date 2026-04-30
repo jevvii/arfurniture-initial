@@ -1,7 +1,7 @@
 import { Address } from '../types';
 
 const metaEnv = typeof import.meta !== 'undefined' ? (import.meta as any).env : undefined;
-const AUTH_API_BASE = (metaEnv?.VITE_AUTH_API_BASE || 'http://localhost:4000').replace(/\/$/, '');
+const AUTH_API_BASE = (metaEnv?.VITE_AUTH_API_BASE ?? 'http://localhost:4000').replace(/\/$/, '');
 
 const parseResponse = async (res: Response) => {
   let data: any = {};

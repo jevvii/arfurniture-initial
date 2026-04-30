@@ -1,7 +1,6 @@
 import path from 'path'
 import logger from './logger.mjs'
-
-const BUCKET_NAME = 'ARfurniture_bucket'
+import { BUCKET_NAME } from '../config/storage.mjs'
 
 // Helper to sanitize folder names
 export const sanitizeFolderName = (name) => {
@@ -27,16 +26,24 @@ export const sanitizeFileName = (originalName) => {
   return `${sanitizedName}${ext}`
 }
 
-// Helper to extract path from Supabase Public URL
+// Helper to extract relative object path from public URL
 export const getPathFromUrl = (url) => {
   if (!url) return null
   try {
-    // Example: https://project.supabase.co/storage/v1/object/public/ARfurniture_bucket/path/to/file.ext
-    // We need 'path/to/file.ext'
-    const bucketToken = `${BUCKET_NAME}/`
-    if (url.includes(bucketToken)) {
-      return url.split(bucketToken)[1]
+    const parsed = new URL(url)
+    const bucketToken = `/${BUCKET_NAME}/`
+    const pathname = parsed.pathname || ''
+    const markerIndex = pathname.indexOf(bucketToken)
+
+    if (markerIndex >= 0) {
+      return pathname.slice(markerIndex + bucketToken.length)
     }
+
+    // Fallback for already-relative paths
+    if (!url.startsWith('http')) {
+      return String(url).replace(/^\/+/, '')
+    }
+
     return null
   } catch (e) {
     logger.error('Error extracting path from URL', e, { url })
@@ -44,10 +51,10 @@ export const getPathFromUrl = (url) => {
   }
 }
 
-// Helper to delete Supabase folder content (recursive)
+// Helper to delete folder content (recursive)
 export const deleteSupabaseFolder = async (supabase, folderPath) => {
   if (!supabase) {
-    logger.warn('Supabase client not available, skipping folder deletion', { folderPath })
+    logger.warn('Storage client not available, skipping folder deletion', { folderPath })
     return
   }
   

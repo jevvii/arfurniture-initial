@@ -82,29 +82,6 @@ router.put('/:userId/:addressId',
     // Using simple $set with array positional operator requires finding the index first or using arrayFilters
     // MongoDB array update with id:
     
-    const result = await users.updateOne(
-      { 
-        _id: new ObjectId(userId), 
-        "addresses.id": addressId 
-      },
-      { 
-        $set: { 
-          "addresses.$": { 
-            id: addressId, 
-            ...updates,
-            // We need to keep the original fields that are not updated, but $set replaces the whole object at that position if we do "addresses.$": newObj
-            // Actually, to merge, we should use "addresses.$.field": value
-            // But since `updates` is dynamic, let's just use iteration or specific set fields if possible.
-            // A simpler way is to read, update in memory, and write back, but that's not atomic.
-            // Better: use individual fields in $set
-          } 
-        } 
-      } 
-    )
-    // Wait, the above replaces the entire object at that position. It might remove fields not in `updates`.
-    // Correct approach to MERGE updates:
-    // We can't legally do "addresses.$.field" for dynamic keys easily in one query without constructing the object manually.
-    
     // Let's iterate keys for $set
     const setFields = {}
     for (const [key, value] of Object.entries(updates)) {

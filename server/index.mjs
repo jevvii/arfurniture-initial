@@ -36,7 +36,7 @@ const __dirname = path.dirname(__filename)
 
 // Load environment variables
 dotenv.config()
-if (!process.env.MONGODB_URI) {
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
   dotenv.config({ path: path.resolve(process.cwd(), '.env.local') })
 }
 
@@ -69,7 +69,7 @@ app.use(requestIdMiddleware)
 app.use(requestLogger)
 
 // Serve static files from products folder
-const productsPath = path.join(__dirname, '..', 'products')
+const productsPath = path.join(__dirname, '..', 'public', 'products')
 app.use('/products', express.static(productsPath))
 
 // =====================
@@ -77,26 +77,22 @@ app.use('/products', express.static(productsPath))
 // =====================
 
 // Validate required environment variables
-const MONGODB_URI = process.env.MONGODB_URI
-const SUPABASE_URL = process.env.SUPABASE_URL
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-if (!MONGODB_URI) {
-  logger.error('MONGODB_URI environment variable is required')
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  logger.error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables are required')
   process.exit(1)
 }
 
 // Connect to database and initialize storage
 logger.info('Initializing server...')
 
-const db = await connectDatabase(MONGODB_URI)
+const db = await connectDatabase()
 const collections = getCollections()
 
 // Store collections in app.locals for access in routes
 app.locals.collections = collections
 
 // Initialize Supabase
-const supabase = initializeSupabase(SUPABASE_URL, SUPABASE_KEY)
+const supabase = initializeSupabase()
 
 // =====================
 // HEALTH CHECK
