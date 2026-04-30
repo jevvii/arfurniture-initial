@@ -128,9 +128,16 @@ class StorjSupabaseCompatClient {
             .split('/')
             .map((segment) => encodeURIComponent(segment))
             .join('/')
+            
+          // If a custom public base URL is provided in .env, use it.
+          // Otherwise, fall back to our local Express proxy endpoint to avoid CORS issues.
+          const finalUrl = this.publicBaseUrl.includes('gateway.storjshare.io') 
+            ? `/api/assets/${encodedPath}`
+            : `${this.publicBaseUrl}/${encodedPath}`
+            
           return {
             data: {
-              publicUrl: `${this.publicBaseUrl}/${encodedPath}`
+              publicUrl: finalUrl
             }
           }
         }

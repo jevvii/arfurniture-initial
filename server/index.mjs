@@ -23,6 +23,7 @@ import cartRoutes from './routes/cart.mjs'
 import addressRoutes from './routes/address.mjs'
 import settingsRoutes from './routes/settings.mjs'
 import notificationRoutes from './routes/notifications.mjs'
+import assetRoutes from './routes/assets.mjs'
 
 // Utilities
 import logger from './utils/logger.mjs'
@@ -139,6 +140,7 @@ app.use('/api/cart', cartRoutes)
 app.use('/api/address', addressRoutes)
 app.use('/api/settings', settingsRoutes)
 app.use('/api/notifications', notificationRoutes)
+app.use('/api/assets', assetRoutes)
 
 // =====================
 // ERROR HANDLING

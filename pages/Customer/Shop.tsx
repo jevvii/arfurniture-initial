@@ -11,33 +11,33 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => (
     to={`/product/${product._id}`}
     className="group block bg-white rounded-xl overflow-hidden border border-slate-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col"
   >
-    <div className="aspect-square overflow-hidden bg-slate-100 relative">
+    <div className="aspect-[4/3] sm:aspect-square overflow-hidden bg-slate-100 relative">
       <img
         src={resolveAssetUrl(product.imageUrl)}
         alt={product.name}
         className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
       />
-      <div className="absolute top-2 left-2 flex flex-col gap-1">
+      <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
         {product.isNewArrival && (
-          <span className="bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">New</span>
+          <span className="bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm w-fit">New</span>
         )}
         {product.isFeatured && (
-          <span className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">Featured</span>
+          <span className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm w-fit">Featured</span>
         )}
         {product.isSale && (
-          <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">Sale</span>
+          <span className="bg-[#CD3C32] text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm w-fit">Sale</span>
         )}
       </div>
-      <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0">
+      <div className="absolute bottom-3 right-3 bg-white/90 backdrop-blur p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 shadow-lg z-10">
         <ArrowRight className="w-4 h-4 text-indigo-600" />
       </div>
     </div>
     <div className="p-4 flex flex-col flex-grow">
-      <p className="text-xs text-slate-500 mb-1">{product.category}</p>
-      <h3 className="font-bold text-slate-900 mb-1 group-hover:text-indigo-600 transition-colors line-clamp-1">{product.name}</h3>
+      <p className="text-xs font-medium text-slate-500 mb-1">{product.category}</p>
+      <h3 className="font-bold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-1">{product.name}</h3>
       <div className="mt-auto pt-2 flex items-center justify-between">
-        <p className="text-lg font-semibold text-slate-900">{CURRENCY}{product.price.toLocaleString()}</p>
-        <p className={`text-xs font-medium ${product.stock > 0 ? 'text-slate-500' : 'text-red-500'}`}>
+        <p className="text-sm sm:text-base font-bold text-slate-900">{CURRENCY}{product.price.toLocaleString()}</p>
+        <p className={`text-[10px] font-medium ${product.stock > 0 ? 'text-slate-500' : 'text-red-500'}`}>
           {product.stock > 0 ? `${product.stock} in stock` : 'Out of Stock'}
         </p>
       </div>
@@ -140,8 +140,9 @@ export const Shop: React.FC = () => {
         db.getProducts(),
         db.getBanners()
       ]);
-      setProducts(prodData);
-      setBanners(bannerData.filter(b => b.isActive));
+      // Make sure we have an array, sometimes API returns an object or null if error
+      setProducts(Array.isArray(prodData) ? prodData : []);
+      setBanners(Array.isArray(bannerData) ? bannerData.filter(b => b.isActive) : []);
       setLoading(false);
     };
     loadData();
