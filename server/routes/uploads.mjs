@@ -50,9 +50,11 @@ router.post('/image',
       type: req.file.mimetype
     })
     
-    // Delete existing files in this variant's images folder first
-    logger.debug(`Deleting existing images in: ${folderPath}`, { requestId: req.requestId })
-    await deleteSupabaseFolder(supabase, folderPath)
+    // Delete existing files in this variant's images folder first (ONLY if not banners)
+    if (productFolder !== 'banners') {
+      logger.debug(`Deleting existing images in: ${folderPath}`, { requestId: req.requestId })
+      await deleteSupabaseFolder(supabase, folderPath)
+    }
     
     // Upload new image
     const { error } = await supabase.storage

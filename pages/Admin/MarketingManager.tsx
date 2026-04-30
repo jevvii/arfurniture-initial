@@ -121,22 +121,6 @@ export const MarketingManager: React.FC = () => {
         }
     };
 
-    const uploadFile = async (file: File): Promise<string> => {
-        const formDataUpload = new FormData();
-        formDataUpload.append('file', file);
-        const response = await fetch(`${UPLOAD_BASE}/api/upload/image?productName=banners`, {
-            method: 'POST',
-            body: formDataUpload
-        });
-
-        if (!response.ok) {
-            throw new Error('Upload failed');
-        }
-
-        const result = await response.json();
-        return result.url;
-    };
-
     const validateForm = () => {
         if (!formData.title.trim()) return "Title is required";
         if (!formData.description.trim()) return "Description is required";
@@ -145,6 +129,18 @@ export const MarketingManager: React.FC = () => {
         if (!imageFile && !formData.imageUrl) return "Please select a banner image file";
         return null;
     };
+
+    const PREDEFINED_LINKS = [
+        { label: 'Home Page', value: '/' },
+        { label: 'New Arrivals', value: '/?filter=new' },
+        { label: 'Featured Collection', value: '/?filter=featured' },
+        { label: 'On Sale', value: '/?filter=sale' },
+        { label: 'Chairs Category', value: '/?category=Chairs' },
+        { label: 'Sofas Category', value: '/?category=Sofas' },
+        { label: 'Tables Category', value: '/?category=Tables' },
+        { label: 'Decor Category', value: '/?category=Decor' },
+        { label: 'About Us', value: '/about' },
+    ];
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -162,7 +158,19 @@ export const MarketingManager: React.FC = () => {
 
             if (imageFile) {
                 setUploadingImage(true);
-                finalImageUrl = await uploadFile(imageFile);
+                // Use the banner title as a subfolder to prevent overwriting everything
+                const productName = `banners-${sanitizeFolderName(formData.title)}`;
+                const formDataUpload = new FormData();
+                formDataUpload.append('file', imageFile);
+                
+                const uploadRes = await fetch(`${UPLOAD_BASE}/api/upload/image?productName=${productName}`, {
+                    method: 'POST',
+                    body: formDataUpload
+                });
+                
+                if (!uploadRes.ok) throw new Error('Image upload failed');
+                const uploadData = await uploadRes.json();
+                finalImageUrl = uploadData.url;
                 setUploadingImage(false);
             }
 
@@ -187,13 +195,22 @@ export const MarketingManager: React.FC = () => {
 
             setIsModalOpen(false);
             setEditingId(null);
-        } catch (err) {
-            setFormError("Failed to save banner. Please try again.");
+        } catch (err: any) {
+            console.error("Save error:", err);
+            setFormError(err.message || "Failed to save banner. Please try again.");
             setUploadingImage(false);
         } finally {
             setIsSubmitting(false);
         }
     };
+
+    // Helper to sanitize folder names (copied from backend utility)
+    function sanitizeFolderName(name: string) {
+        return name.toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .substring(0, 30) || 'unnamed';
+    }
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
@@ -356,7 +373,30 @@ export const MarketingManager: React.FC = () => {
                                             </div>
                                             <div>
                                                 <label className="block text-sm font-semibold text-slate-700 mb-1">Link URL *</label>
-                                                <input name="link" required value={formData.link} onChange={handleInputChange} className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. /?filter=sale" />
+                                                <div className="space-y-2">
+                                                    <select 
+                                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none bg-white text-sm"
+                                                        value={PREDEFINED_LINKS.find(l => l.value === formData.link) ? formData.link : 'custom'}
+                                                        onChange={(e) => {
+                                                            if (e.target.value !== 'custom') {
+                                                                setFormData(prev => ({ ...prev, link: e.target.value }));
+                                                            }
+                                                        }}
+                                                    >
+                                                        <option value="custom">Custom URL...</option>
+                                                        {PREDEFINED_LINKS.map(link => (
+                                                            <option key={link.value} value={link.value}>{link.label}</option>
+                                                        ))}
+                                                    </select>
+                                                    <input 
+                                                        name="link" 
+                                                        required 
+                                                        value={formData.link} 
+                                                        onChange={handleInputChange} 
+                                                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none text-sm" 
+                                                        placeholder="e.g. /?filter=sale" 
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="flex items-center mt-2">

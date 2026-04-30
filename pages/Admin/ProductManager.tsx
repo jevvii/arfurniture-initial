@@ -655,8 +655,8 @@ export const ProductManager: React.FC = () => {
                   <tr key={product._id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-md bg-slate-100 overflow-hidden border border-slate-200">
-                          <img src={product.imageUrl} alt="" className="w-full h-full object-cover" />
+                        <div className="w-10 h-10 rounded-md bg-slate-100 overflow-hidden border border-slate-200 flex-shrink-0">
+                          <img src={resolveAssetUrl(product.imageUrl)} alt="" className="w-full h-full object-cover" />
                         </div>
                         <div>
                           <div className="font-medium text-slate-900">{product.name}</div>
