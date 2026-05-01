@@ -278,7 +278,7 @@ export const ProductDetail: React.FC = () => {
 
             {/* Variant Selector */}
             <div className="mb-8">
-              <h3 className="text-sm font-bold text-slate-900 mb-3">Available Colors</h3>
+              <h3 className="text-sm font-bold text-slate-900 mb-3">Available Wood Finishes</h3>
               <div className="flex gap-3">
                 <button
                   onClick={() => {
@@ -286,12 +286,12 @@ export const ProductDetail: React.FC = () => {
                     setActiveImage(resolveAssetUrl(product.imageUrl));
                   }}
                   className={`group relative w-12 h-12 rounded-full border-2 transition-all flex items-center justify-center ${!selectedVariant ? 'border-indigo-600 ring-2 ring-indigo-600/20 scale-110' : 'border-slate-200 hover:border-slate-400'}`}
-                  title={product.colorName || product.color || 'Base'}
+                  title={product.colorName || 'Base Finish'}
                 >
                   <span className="absolute inset-1 rounded-full border border-black/5" style={{ backgroundColor: product.color || '#F8F8F8' }}></span>
                   {!selectedVariant && (
-                    <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs font-semibold text-slate-900 bg-white px-2 py-0.5 rounded shadow-sm whitespace-nowrap z-10">
-                      {product.colorName || product.color || 'Base'}
+                    <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-900 bg-white px-2 py-0.5 rounded shadow-sm whitespace-nowrap z-10 uppercase tracking-tighter">
+                      Original
                     </span>
                   )}
                 </button>
@@ -300,7 +300,6 @@ export const ProductDetail: React.FC = () => {
                     key={variant.id}
                     onClick={() => {
                       setSelectedVariant(variant);
-                      // Always use base image and apply tint via ColorTintedImage
                       setActiveImage(resolveAssetUrl(product.imageUrl));
                     }}
                     className={`group relative w-12 h-12 rounded-full border-2 transition-all ${selectedVariant?.id === variant.id ? 'border-indigo-600 ring-2 ring-indigo-600/20 scale-110' : 'border-slate-200 hover:border-slate-400'
@@ -309,8 +308,8 @@ export const ProductDetail: React.FC = () => {
                   >
                     <span className="absolute inset-1 rounded-full border border-black/5" style={{ backgroundColor: variant.color }}></span>
                     {selectedVariant?.id === variant.id && (
-                      <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs font-semibold text-slate-900 bg-white px-2 py-0.5 rounded shadow-sm whitespace-nowrap z-10">
-                        {variant.name}
+                      <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-slate-900 bg-white px-2 py-0.5 rounded shadow-sm whitespace-nowrap z-10 uppercase tracking-tighter">
+                        {variant.name.split(' ')[0]}
                       </span>
                     )}
                   </button>

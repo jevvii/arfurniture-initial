@@ -79,9 +79,10 @@ async function seedProducts() {
             isSale: Math.random() > 0.8,
             createdAt: new Date(),
             variants: [
-              { id: 'v1-' + folder, name: 'Midnight Black', color: '#1A1A1B', stock: 10 },
-              { id: 'v2-' + folder, name: 'Ocean Blue', color: '#1E3A8A', stock: 5 },
-              { id: 'v3-' + folder, name: 'Forest Green', color: '#064E3B', stock: 8 }
+              { id: 'v1-' + folder, name: 'Narra (Reddish Brown)', color: '#9A3E2B', stock: 10 },
+              { id: 'v2-' + folder, name: 'Kamagong (Ironwood)', color: '#1A0F0D', stock: 5 },
+              { id: 'v3-' + folder, name: 'Acacia (Golden Brown)', color: '#72503A', stock: 8 },
+              { id: 'v4-' + folder, name: 'Molave (Light Straw)', color: '#E3C58E', stock: 12 }
             ]
           }
         }

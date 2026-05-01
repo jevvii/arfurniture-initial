@@ -9,18 +9,18 @@ interface ColorPickerProps {
 }
 
 const PRESET_COLORS = [
+    '#9A3E2B', // Narra
+    '#1A0F0D', // Kamagong
+    '#72503A', // Acacia
+    '#E3C58E', // Molave
+    '#6E261E', // Mahogany
+    '#C19A6B', // Santol
+    '#FFFFFF', // White/Base
     '#0F172A', // Slate 900
     '#4F46E5', // Indigo 600
     '#059669', // Emerald 600
     '#DC2626', // Red 600
     '#D97706', // Amber 600
-    '#2563EB', // Blue 600
-    '#7C3AED', // Violet 600
-    '#DB2777', // Pink 600
-    '#FFFFFF', // White
-    '#94A3B8', // Slate 400
-    '#78350F', // Warm Wood
-    '#A16207', // Gold/Brass
 ];
 
 export const ColorPicker: React.FC<ColorPickerProps> = ({ value, onChange, label }) => {
