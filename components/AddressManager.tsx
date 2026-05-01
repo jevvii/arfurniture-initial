@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Plus, Trash2, Check, X, Edit2 } from 'lucide-react';
+import { MapPin, Plus, Trash2, Check, X, Edit2, ChevronDown, Keyboard } from 'lucide-react';
 import { Address } from '../types';
 import { getAddresses, addAddress, deleteAddress, updateAddress } from '../services/address';
+import { PH_PROVINCES, PH_CITIES } from '../ph-address-data';
 
 interface AddressManagerProps {
   userId: string;
@@ -16,6 +17,7 @@ export const AddressManager: React.FC<AddressManagerProps> = ({ userId, selected
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState<string | null>(null); // Track editing state
   const [error, setError] = useState<string | null>(null);
+  const [useManualEntry, setUseManualEntry] = useState(false);
 
   const [addressForm, setAddressForm] = useState<Omit<Address, 'id'>>({
     street: '',
@@ -77,6 +79,7 @@ export const AddressManager: React.FC<AddressManagerProps> = ({ userId, selected
         landmark: ''
       });
       setIsEditing(null);
+      setUseManualEntry(false);
       setIsModalOpen(true);
   };
 
@@ -90,6 +93,9 @@ export const AddressManager: React.FC<AddressManagerProps> = ({ userId, selected
           landmark: addr.landmark || ''
       });
       setIsEditing(addr.id || '');
+      // Check if state/province is in our preset list
+      const isPreset = PH_PROVINCES.includes(addr.state);
+      setUseManualEntry(!isPreset);
       setIsModalOpen(true);
   };
 
@@ -111,6 +117,14 @@ export const AddressManager: React.FC<AddressManagerProps> = ({ userId, selected
       setIsModalOpen(false);
       setIsEditing(null);
       setError(null);
+  };
+
+  const handleProvinceChange = (province: string) => {
+      setAddressForm({
+          ...addressForm,
+          state: province,
+          city: '' // Reset city when province changes
+      });
   };
 
   if (isLoading) return <div className="p-4 text-center text-slate-500">Loading addresses...</div>;
@@ -216,12 +230,23 @@ export const AddressManager: React.FC<AddressManagerProps> = ({ userId, selected
                     <h3 className="text-lg font-bold text-slate-900">
                         {isEditing ? 'Edit Address' : 'Add New Address'}
                     </h3>
-                    <button 
-                        onClick={closeModal}
-                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button 
+                            type="button"
+                            onClick={() => setUseManualEntry(!useManualEntry)}
+                            className={`p-2 rounded-lg transition-all flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${useManualEntry ? 'bg-amber-50 text-amber-600 border border-amber-200' : 'bg-slate-50 text-slate-500 border border-slate-200'}`}
+                            title={useManualEntry ? "Switch to Dropdowns" : "Switch to Manual Entry"}
+                        >
+                            {useManualEntry ? <ChevronDown className="w-3.5 h-3.5" /> : <Keyboard className="w-3.5 h-3.5" />}
+                            {useManualEntry ? "Presets" : "Manual"}
+                        </button>
+                        <button 
+                            onClick={closeModal}
+                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
                 
                 <div className="overflow-y-auto flex-1 p-6">
@@ -240,26 +265,50 @@ export const AddressManager: React.FC<AddressManagerProps> = ({ userId, selected
                       
                       <div className="grid grid-cols-2 gap-4">
                           <div>
-                              <label className="block text-sm font-medium text-slate-700 mb-1">City</label>
-                              <input
-                                  type="text"
-                                  required
-                                  placeholder="City"
-                                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
-                                  value={addressForm.city}
-                                  onChange={e => setAddressForm({...addressForm, city: e.target.value})}
-                              />
+                              <label className="block text-sm font-medium text-slate-700 mb-1">Province</label>
+                              {useManualEntry ? (
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Province"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                                    value={addressForm.state}
+                                    onChange={e => setAddressForm({...addressForm, state: e.target.value})}
+                                />
+                              ) : (
+                                <select
+                                    required
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-white"
+                                    value={addressForm.state}
+                                    onChange={e => handleProvinceChange(e.target.value)}
+                                >
+                                    <option value="" disabled>Select Province</option>
+                                    {PH_PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
+                                </select>
+                              )}
                           </div>
                           <div>
-                              <label className="block text-sm font-medium text-slate-700 mb-1">State/Province</label>
-                              <input
-                                  type="text"
-                                  required
-                                  placeholder="State"
-                                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
-                                  value={addressForm.state}
-                                  onChange={e => setAddressForm({...addressForm, state: e.target.value})}
-                              />
+                              <label className="block text-sm font-medium text-slate-700 mb-1">City/Municipality</label>
+                              {useManualEntry || !addressForm.state || !PH_CITIES[addressForm.state as keyof typeof PH_CITIES] ? (
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="City"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                                    value={addressForm.city}
+                                    onChange={e => setAddressForm({...addressForm, city: e.target.value})}
+                                />
+                              ) : (
+                                <select
+                                    required
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-white"
+                                    value={addressForm.city}
+                                    onChange={e => setAddressForm({...addressForm, city: e.target.value})}
+                                >
+                                    <option value="" disabled>Select City</option>
+                                    {PH_CITIES[addressForm.state as keyof typeof PH_CITIES].map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                              )}
                           </div>
                       </div>
 
@@ -283,8 +332,7 @@ export const AddressManager: React.FC<AddressManagerProps> = ({ userId, selected
                                   placeholder="Country"
                                   className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 bg-slate-50"
                                   value={addressForm.country}
-                                  onChange={e => setAddressForm({...addressForm, country: e.target.value})}
-                                  readOnly // Assuming country is fixed for now or change to select
+                                  readOnly
                               />
                           </div>
                       </div>
@@ -293,7 +341,7 @@ export const AddressManager: React.FC<AddressManagerProps> = ({ userId, selected
                           <label className="block text-sm font-medium text-slate-700 mb-1">Landmark <span className="text-slate-400 font-normal">(Optional)</span></label>
                           <input
                               type="text"
-                              placeholder="Near..."
+                              placeholder="e.g., Beside the pharmacy"
                               className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
                               value={addressForm.landmark}
                               onChange={e => setAddressForm({...addressForm, landmark: e.target.value})}
@@ -324,3 +372,4 @@ export const AddressManager: React.FC<AddressManagerProps> = ({ userId, selected
     </div>
   );
 };
+

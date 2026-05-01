@@ -1,0 +1,76 @@
+export const PH_REGIONS = [
+  "National Capital Region (NCR)",
+  "Ilocos Region (Region I)",
+  "Cagayan Valley (Region II)",
+  "Central Luzon (Region III)",
+  "CALABARZON (Region IV-A)",
+  "MIMAROPA (Region IV-B)",
+  "Bicol Region (Region V)",
+  "Western Visayas (Region VI)",
+  "Central Visayas (Region VII)",
+  "Eastern Visayas (Region VIII)",
+  "Zamboanga Peninsula (Region IX)",
+  "Northern Mindanao (Region X)",
+  "Davao Region (Region XI)",
+  "SOCCSKSARGEN (Region XII)",
+  "Caraga (Region XIII)",
+  "Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)",
+  "Cordillera Administrative Region (CAR)"
+];
+
+// Sample of major provinces and cities for better UX
+export const PH_PROVINCES = [
+  "Metro Manila",
+  "Cebu",
+  "Davao del Sur",
+  "Pampanga",
+  "Cavite",
+  "Laguna",
+  "Batangas",
+  "Rizal",
+  "Bulacan",
+  "Benguet",
+  "Iloilo",
+  "Negros Occidental",
+  "Negros Oriental",
+  "Pangasinan",
+  "Tarlac",
+  "Zambales",
+  "Bataan",
+  "Nueva Ecija",
+  "Isabela",
+  "Cagayan",
+  "Leyte",
+  "Misamis Oriental",
+  "South Cotabato",
+  "Zamboanga del Sur"
+].sort();
+
+export const PH_CITIES = {
+  "Metro Manila": [
+    "Manila", "Quezon City", "Caloocan", "Las Piñas", "Makati", "Malabon", "Mandaluyong", "Marikina", 
+    "Muntinlupa", "Navotas", "Parañaque", "Pasay", "Pasig", "Pateros", "San Juan", "Taguig", "Valenzuela"
+  ],
+  "Cebu": ["Cebu City", "Lapu-Lapu", "Mandaue", "Talisay", "Toledo", "Danao", "Carcar", "Naga"],
+  "Davao del Sur": ["Davao City", "Digos"],
+  "Pampanga": ["Angeles", "San Fernando", "Mabalacat"],
+  "Cavite": ["Bacoor", "Imus", "Dasmariñas", "Tagaytay", "Cavite City", "Trece Martires", "General Trias"],
+  "Bulacan": ["Malolos", "Meycauayan", "San Jose del Monte"],
+  "Laguna": ["Biñan", "Cabuyao", "Calamba", "San Pablo", "Santa Rosa", "San Pedro"],
+  "Batangas": ["Batangas City", "Lipa", "Tanauan"],
+  "Rizal": ["Antipolo", "Cainta", "Taytay", "Binangonan", "Angono"],
+  "Benguet": ["Baguio City", "La Trinidad"],
+  "Iloilo": ["Iloilo City", "Passi"],
+  "Negros Occidental": ["Bacolod City", "Bago", "Cadiz", "Escalante", "Himamaylan", "Kabankalan", "La Carlota", "Sagay", "San Carlos", "Silay", "Sipalay", "Talisay", "Victorias"],
+  "Zamboanga del Sur": ["Zamboanga City", "Pagadian"],
+  "Misamis Oriental": ["Cagayan de Oro", "Gingoog"],
+  "South Cotabato": ["General Santos", "Koronadal"],
+  "Leyte": ["Tacloban", "Ormoc"],
+  "Pangasinan": ["Dagupan", "Alaminos", "San Carlos", "Urdaneta"],
+  "Tarlac": ["Tarlac City"],
+  "Zambales": ["Olongapo"],
+  "Bataan": ["Balanga"],
+  "Nueva Ecija": ["Cabanatuan", "Gapan", "Palayan", "San Jose", "Muñoz"],
+  "Isabela": ["Cauayan", "Ilagan", "Santiago"],
+  "Cagayan": ["Tuguegarao"]
+};

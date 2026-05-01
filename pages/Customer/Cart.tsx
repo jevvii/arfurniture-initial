@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, ArrowRight, CreditCard, MapPin, Plus, Check, X, Phone, User, Home, CheckCircle, Edit, Minus } from 'lucide-react';
+import { Trash2, ArrowRight, CreditCard, MapPin, Plus, Check, X, Phone, User, Home, CheckCircle, Edit, Minus, ChevronDown, Keyboard } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Address, CartItem, ProductVariant } from '../../types';
@@ -8,6 +8,7 @@ import { CURRENCY, resolveAssetUrl } from '../../constants';
 import { db } from '../../services/db';
 import { AddressManager } from '../../components/AddressManager';
 import { ColorTintedImage } from '../../components/ColorTintedImage';
+import { PH_PROVINCES, PH_CITIES } from '../../ph-address-data';
 
 interface CheckoutForm {
     recipientName: string;
@@ -116,6 +117,7 @@ export const Cart: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [selectedAddressId, setSelectedAddressId] = useState<string | undefined>(undefined);
+    const [useManualEntry, setUseManualEntry] = useState(false);
 
     const [checkoutForm, setCheckoutForm] = useState<CheckoutForm>({
         recipientName: '',
@@ -125,8 +127,16 @@ export const Cart: React.FC = () => {
         city: '',
         state: '',
         zipCode: '',
-        country: ''
+        country: 'Philippines'
     });
+
+    const handleCheckoutProvinceChange = (province: string) => {
+        setCheckoutForm(prev => ({
+            ...prev,
+            state: province,
+            city: '' // Reset city
+        }));
+    };
 
     const getItemKey = (item: CartItem) => {
         return item.selectedVariant ? `${item._id}-${item.selectedVariant.id}` : item._id;
@@ -575,9 +585,19 @@ export const Cart: React.FC = () => {
                                             </div>
                                         </div>
                                         <div className="space-y-4">
-                                            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2 mb-4">Shipping Address</h3>
+                                            <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-4">
+                                                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Shipping Address</h3>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setUseManualEntry(!useManualEntry)}
+                                                    className={`px-3 py-1 rounded-lg transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider ${useManualEntry ? 'bg-amber-50 text-amber-600 border border-amber-200' : 'bg-slate-100 text-slate-500 border border-slate-200'}`}
+                                                >
+                                                    {useManualEntry ? <ChevronDown className="w-3 h-3" /> : <Keyboard className="w-3 h-3" />}
+                                                    {useManualEntry ? "Use Saved" : "Enter Manually"}
+                                                </button>
+                                            </div>
                                             
-                                            {user && (
+                                            {!useManualEntry && user && (
                                                 <div className="mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-200">
                                                     <div className="flex items-center justify-between mb-4">
                                                         <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Saved Addresses</h4>
@@ -603,7 +623,7 @@ export const Cart: React.FC = () => {
                                             )}
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div>
+                                                <div className="md:col-span-2">
                                                     <label className="block text-xs font-bold text-slate-500 mb-1">Street *</label>
                                                     <div className="relative">
                                                         <Home className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -618,6 +638,52 @@ export const Cart: React.FC = () => {
                                                     </div>
                                                 </div>
                                                 <div>
+                                                    <label className="block text-xs font-bold text-slate-500 mb-1">Province/State *</label>
+                                                    {useManualEntry ? (
+                                                        <input
+                                                            type="text"
+                                                            required
+                                                            value={checkoutForm.state}
+                                                            onChange={e => setCheckoutForm({ ...checkoutForm, state: e.target.value })}
+                                                            className="w-full pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm"
+                                                            placeholder="Metro Manila"
+                                                        />
+                                                    ) : (
+                                                        <select
+                                                            required
+                                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm bg-white"
+                                                            value={checkoutForm.state}
+                                                            onChange={e => handleCheckoutProvinceChange(e.target.value)}
+                                                        >
+                                                            <option value="" disabled>Select Province</option>
+                                                            {PH_PROVINCES.map(p => <option key={p} value={p}>{p}</option>)}
+                                                        </select>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-slate-500 mb-1">City *</label>
+                                                    {useManualEntry || !checkoutForm.state || !PH_CITIES[checkoutForm.state as keyof typeof PH_CITIES] ? (
+                                                        <input
+                                                            type="text"
+                                                            required
+                                                            value={checkoutForm.city}
+                                                            onChange={e => setCheckoutForm({ ...checkoutForm, city: e.target.value })}
+                                                            className="w-full pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm"
+                                                            placeholder="City"
+                                                        />
+                                                    ) : (
+                                                        <select
+                                                            required
+                                                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm bg-white"
+                                                            value={checkoutForm.city}
+                                                            onChange={e => setCheckoutForm({ ...checkoutForm, city: e.target.value })}
+                                                        >
+                                                            <option value="" disabled>Select City</option>
+                                                            {PH_CITIES[checkoutForm.state as keyof typeof PH_CITIES].map(c => <option key={c} value={c}>{c}</option>)}
+                                                        </select>
+                                                    )}
+                                                </div>
+                                                <div>
                                                     <label className="block text-xs font-bold text-slate-500 mb-1">Landmark</label>
                                                     <div className="relative">
                                                         <MapPin className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -626,31 +692,9 @@ export const Cart: React.FC = () => {
                                                             value={checkoutForm.landmark}
                                                             onChange={e => setCheckoutForm({ ...checkoutForm, landmark: e.target.value })}
                                                             className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm"
-                                                            placeholder="Near Valenzuela City Hall"
+                                                            placeholder="Near City Hall"
                                                         />
                                                     </div>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-bold text-slate-500 mb-1">City *</label>
-                                                    <input
-                                                        type="text"
-                                                        required
-                                                        value={checkoutForm.city}
-                                                        onChange={e => setCheckoutForm({ ...checkoutForm, city: e.target.value })}
-                                                        className="w-full pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm"
-                                                        placeholder="Valenzuela"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-bold text-slate-500 mb-1">Province/State *</label>
-                                                    <input
-                                                        type="text"
-                                                        required
-                                                        value={checkoutForm.state}
-                                                        onChange={e => setCheckoutForm({ ...checkoutForm, state: e.target.value })}
-                                                        className="w-full pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm"
-                                                        placeholder="Metro Manila"
-                                                    />
                                                 </div>
                                                 <div>
                                                     <label className="block text-xs font-bold text-slate-500 mb-1">ZIP Code *</label>
@@ -661,17 +705,6 @@ export const Cart: React.FC = () => {
                                                         onChange={e => setCheckoutForm({ ...checkoutForm, zipCode: e.target.value })}
                                                         className="w-full pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm"
                                                         placeholder="1442"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-bold text-slate-500 mb-1">Country *</label>
-                                                    <input
-                                                        type="text"
-                                                        required
-                                                        value={checkoutForm.country}
-                                                        onChange={e => setCheckoutForm({ ...checkoutForm, country: e.target.value })}
-                                                        className="w-full pr-4 py-2.5 rounded-xl border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none text-sm"
-                                                        placeholder="Philippines"
                                                     />
                                                 </div>
                                             </div>
