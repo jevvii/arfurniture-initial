@@ -405,7 +405,7 @@ export const Cart: React.FC = () => {
                                     <div className="w-24 h-24 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0 relative">
                                         <ColorTintedImage
                                             src={resolveAssetUrl(item.selectedVariant?.imageUrl || item.imageUrl)}
-                                            color={item.selectedVariant?.color}
+                                            color={item.selectedVariant?.color || item.color}
                                             alt={item.name}
                                             className="w-full h-full"
                                         />

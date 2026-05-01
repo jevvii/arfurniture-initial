@@ -145,7 +145,7 @@ export const ProductDetail: React.FC = () => {
             <div className="w-32 h-32 mx-auto mb-6 rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20">
               <ColorTintedImage
                 src={resolveAssetUrl(selectedVariant?.imageUrl || product.imageUrl)}
-                color={selectedVariant?.color}
+                color={selectedVariant?.color || product.color}
                 alt={product.name}
                 className="w-full h-full"
               />
@@ -201,7 +201,7 @@ export const ProductDetail: React.FC = () => {
                   src={resolveAssetUrl(selectedVariant?.arModelUrl || product.arModelUrl)}
                   poster={activeImage}
                   alt={`3D model of ${product.name}`}
-                  color={selectedVariant?.color}
+                  color={selectedVariant?.color || product.color}
                 />
                 <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-xs font-medium text-slate-600 pointer-events-none z-10">
                   Interactive 3D
@@ -211,7 +211,7 @@ export const ProductDetail: React.FC = () => {
               <div className="w-full h-full animate-in fade-in duration-500">
                 <ColorTintedImage
                   src={activeImage}
-                  color={selectedVariant?.color}
+                  color={selectedVariant?.color || product.color}
                   alt={product.name}
                   className="w-full h-full"
                 />
@@ -279,12 +279,12 @@ export const ProductDetail: React.FC = () => {
                     setActiveImage(resolveAssetUrl(product.imageUrl));
                   }}
                   className={`group relative w-12 h-12 rounded-full border-2 transition-all flex items-center justify-center ${!selectedVariant ? 'border-indigo-600 ring-2 ring-indigo-600/20 scale-110' : 'border-slate-200 hover:border-slate-400'}`}
-                  title={product.colorName || 'Default'}
+                  title={product.colorName || product.color || 'Base'}
                 >
                   <span className="absolute inset-1 rounded-full border border-black/5" style={{ backgroundColor: product.color || '#F8F8F8' }}></span>
                   {!selectedVariant && (
                     <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-xs font-semibold text-slate-900 bg-white px-2 py-0.5 rounded shadow-sm whitespace-nowrap z-10">
-                      {product.colorName || 'Default'}
+                      {product.colorName || product.color || 'Base'}
                     </span>
                   )}
                 </button>
@@ -439,10 +439,11 @@ export const ProductDetail: React.FC = () => {
               className="group block bg-white rounded-xl overflow-hidden border border-slate-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col"
             >
               <div className="aspect-square overflow-hidden bg-slate-100 relative">
-                <img
+                <ColorTintedImage
                   src={resolveAssetUrl(rp.imageUrl)}
+                  color={rp.color}
                   alt={rp.name}
-                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full"
                 />
                 {rp.isNewArrival && (
                   <span className="absolute top-2 left-2 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm">New</span>

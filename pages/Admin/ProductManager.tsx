@@ -839,6 +839,16 @@ export const ProductManager: React.FC = () => {
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mt-4">
                   <label className="block text-sm font-semibold text-slate-900 mb-3">Product Variants</label>
 
+                  {/* Base color (always shown, non-editable here) */}
+                  <div className="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-200 mb-2 opacity-75">
+                    <div className="w-6 h-6 rounded-full border border-slate-200 flex-shrink-0" style={{ backgroundColor: formData.color }}></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-slate-900 truncate">{formData.colorName || 'Base'}</div>
+                      <div className="text-xs text-slate-500">Stock: {formData.stock || 0}</div>
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 py-0.5 bg-slate-100 rounded">Base</span>
+                  </div>
+
                   {/* List of existing variants */}
                   {variants.length > 0 && (
                     <div className="space-y-2 mb-4">

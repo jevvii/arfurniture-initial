@@ -5,6 +5,7 @@ import { ArrowRight, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Product, MarketingBanner } from '../../types';
 import { db } from '../../services/db';
 import { CURRENCY, resolveAssetUrl } from '../../constants';
+import { ColorTintedImage } from '../../components/ColorTintedImage';
 
 const ProductCard: React.FC<{ product: Product }> = ({ product }) => (
   <Link
@@ -12,10 +13,11 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => (
     className="group block bg-white rounded-xl overflow-hidden border border-slate-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 h-full flex flex-col"
   >
     <div className="aspect-[4/3] sm:aspect-square overflow-hidden bg-slate-100 relative">
-      <img
+      <ColorTintedImage
         src={resolveAssetUrl(product.imageUrl)}
+        color={product.color}
         alt={product.name}
-        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+        className="w-full h-full"
       />
       <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
         {product.isNewArrival && (
