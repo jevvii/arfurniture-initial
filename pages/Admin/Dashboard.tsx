@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Package, ShoppingCart, TrendingUp, Users, AlertTriangle, ArrowRight, BarChart3, PieChart as PieChartIcon, CheckCircle } from 'lucide-react';
+import { Package, ShoppingCart, TrendingUp, Users, AlertTriangle, ArrowRight, BarChart3, PieChart as PieChartIcon, CheckCircle, Award } from 'lucide-react';
 import { db } from '../../services/db';
 import { DashboardStats } from '../../types';
 import { CURRENCY } from '../../constants';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, BarChart, Bar, Legend
+  PieChart, Pie, Cell, BarChart, Bar, Legend, Label
 } from 'recharts';
 import { Link } from 'react-router-dom';
 
@@ -14,6 +14,7 @@ export const AdminDashboard: React.FC = () => {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [chartMode, setChartMode] = useState<'count' | 'value'>('count');
 
   useEffect(() => {
     loadStats();
@@ -31,7 +32,15 @@ export const AdminDashboard: React.FC = () => {
     }
   };
 
-  const COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+  const STATUS_COLORS: Record<string, string> = {
+    pending: '#94A3B8',    // Slate 400
+    processing: '#4F46E5', // Indigo 600
+    shipped: '#F59E0B',    // Amber 500
+    delivered: '#10B981',  // Emerald 500
+    cancelled: '#EF4444'   // Red 500
+  };
+
+  const CATEGORY_COLORS = ['#4F46E5', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
 
   if (loading) {
     return (
@@ -102,10 +111,7 @@ export const AdminDashboard: React.FC = () => {
               <BarChart3 className="w-5 h-5 text-indigo-500" />
               Revenue Growth (Last 7 Days)
             </h3>
-            <select className="text-xs font-bold text-slate-500 bg-slate-50 border-none rounded-lg px-3 py-1.5 focus:ring-0">
-              <option>Last 7 Days</option>
-              <option>Last 30 Days</option>
-            </select>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1.5 rounded-lg">Last 7 Days</div>
           </div>
           <div className="h-[300px] w-full mt-auto">
             <ResponsiveContainer width="100%" height="100%">
@@ -142,11 +148,23 @@ export const AdminDashboard: React.FC = () => {
 
         {/* Order Status Pie */}
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col">
-          <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <PieChartIcon className="w-5 h-5 text-emerald-500" />
-            Orders Breakdown
-          </h3>
-          <div className="h-[250px] w-full relative">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+              <PieChartIcon className="w-5 h-5 text-emerald-500" />
+              Orders Breakdown
+            </h3>
+            <div className="flex bg-slate-50 p-1 rounded-lg">
+                <button 
+                  onClick={() => setChartMode('count')}
+                  className={`px-2 py-1 text-[10px] font-bold rounded-md transition-all ${chartMode === 'count' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
+                >#</button>
+                <button 
+                  onClick={() => setChartMode('value')}
+                  className={`px-2 py-1 text-[10px] font-bold rounded-md transition-all ${chartMode === 'value' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400'}`}
+                >₱</button>
+            </div>
+          </div>
+          <div className="h-[230px] w-full relative">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -156,78 +174,90 @@ export const AdminDashboard: React.FC = () => {
                   innerRadius={60}
                   outerRadius={80}
                   paddingAngle={5}
-                  dataKey="count"
+                  dataKey={chartMode === 'count' ? 'count' : 'value'}
                 >
                   {(stats?.ordersByStatus || []).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.status.toLowerCase()] || CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                   formatter={(value: any) => chartMode === 'count' ? value : `${CURRENCY}${value.toLocaleString()}`}
+                />
               </PieChart>
             </ResponsiveContainer>
             {/* Center label */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-              <div className="text-2xl font-black text-slate-800">
-                {(stats?.ordersByStatus || []).reduce((acc, curr) => acc + (Number(curr.count) || 0), 0)}
+              <div className="text-xl font-black text-slate-800">
+                {chartMode === 'count' 
+                  ? (stats?.ordersByStatus || []).reduce((acc, curr) => acc + (Number(curr.count) || 0), 0)
+                  : `${CURRENCY}${(stats?.ordersByStatus || []).reduce((acc, curr) => acc + (Number(curr.value) || 0), 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
               </div>
-              <div className="text-[10px] uppercase font-bold text-slate-400">Total Orders</div>
+              <div className="text-[8px] uppercase font-bold text-slate-400">{chartMode === 'count' ? 'Total Orders' : 'Total Value'}</div>
             </div>
           </div>
-          <div className="mt-6 space-y-2">
-            {stats?.ordersByStatus.map((item, index) => (
-              <div key={item.status} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                  <span className="capitalize text-slate-600">{item.status}</span>
+          <div className="mt-6 grid grid-cols-2 gap-2">
+            {(stats?.ordersByStatus || []).map((item, index) => (
+              <div key={item.status} className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg">
+                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: STATUS_COLORS[item.status.toLowerCase()] || CATEGORY_COLORS[index % CATEGORY_COLORS.length] }}></div>
+                <div className="flex flex-col">
+                    <span className="capitalize text-[10px] font-bold text-slate-500">{item.status}</span>
+                    <span className="font-black text-slate-900 text-xs">
+                        {chartMode === 'count' ? item.count : `${CURRENCY}${item.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+                    </span>
                 </div>
-                <span className="font-bold text-slate-900">{item.count}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Low Stock Alerts */}
+        {/* Top Selling Products */}
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-slate-800 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-red-500" />
-              Low Stock Alerts
+              <Award className="w-5 h-5 text-amber-500" />
+              Best Sellers
             </h3>
-            <Link to="/admin/products" className="text-[10px] font-bold text-indigo-600 uppercase hover:underline">View All</Link>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">All Time</span>
           </div>
-          <div className="space-y-4">
-            {stats?.lowStockProducts && stats.lowStockProducts.length > 0 ? (
-               stats.lowStockProducts.map(product => (
-                 <div key={product.name} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold text-slate-800 line-clamp-1">{product.name}</span>
-                      <span className="text-[10px] text-slate-500">Inventory Status: Critical</span>
+          <div className="space-y-4 flex-1">
+            {stats?.topSellingProducts && stats.topSellingProducts.length > 0 ? (
+               stats.topSellingProducts.map((product, idx) => (
+                 <div key={product.name} className="flex items-center gap-4 p-3 hover:bg-slate-50 rounded-xl transition-colors group">
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm ${idx === 0 ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-400'}`}>
+                      {idx + 1}
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-xs font-black ${product.stock <= 2 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-orange-100 text-orange-600'}`}>
-                      {product.stock}
+                    <div className="flex flex-col flex-1">
+                      <span className="text-xs font-bold text-slate-800 line-clamp-1">{product.name}</span>
+                      <span className="text-[10px] text-slate-500 uppercase tracking-tight font-medium">{product.salesCount} sold</span>
+                    </div>
+                    <div className="text-xs font-black text-slate-900">
+                      {CURRENCY}{product.revenue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </div>
                  </div>
                ))
             ) : (
-              <div className="text-center py-10">
-                <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-3">
-                   <CheckCircle className="w-6 h-6" />
+              <div className="text-center py-10 flex flex-col items-center justify-center h-full">
+                <div className="w-12 h-12 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mb-3">
+                   <ShoppingCart className="w-6 h-6" />
                 </div>
-                <p className="text-sm text-slate-500">All products well-stocked!</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">No sales data yet</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Category Distribution */}
-        <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
-          <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <Package className="w-5 h-5 text-indigo-500" />
-            Inventory by Category
-          </h3>
-          <div className="h-[280px] w-full">
+        {/* Inventory Category Analysis */}
+        <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+              <Package className="w-5 h-5 text-indigo-500" />
+              Inventory Value by Category
+            </h3>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stock Investment</span>
+          </div>
+          <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats?.topCategories} layout="vertical">
+              <BarChart data={stats?.topCategories} layout="vertical" margin={{ left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
                 <XAxis type="number" hide />
                 <YAxis 
@@ -235,36 +265,71 @@ export const AdminDashboard: React.FC = () => {
                   type="category" 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{fill: '#475569', fontSize: 12, fontWeight: 600}}
+                  tick={{fill: '#475569', fontSize: 11, fontWeight: 700}}
                   width={100}
                 />
                 <Tooltip 
                   cursor={{fill: '#f8fafc'}}
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  formatter={(value: any) => [`${CURRENCY}${value.toLocaleString()}`, 'Investment Value']}
                 />
-                <Bar dataKey="count" fill="#6366f1" radius={[0, 10, 10, 0]} barSize={20} />
+                <Bar 
+                  dataKey="totalValue" 
+                  fill="#6366f1" 
+                  radius={[0, 10, 10, 0]} 
+                  barSize={24}
+                >
+                    {stats?.topCategories.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
+                    ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
+          </div>
+          <div className="mt-4 grid grid-cols-3 gap-4 border-t border-slate-50 pt-4">
+             {(stats?.topCategories || []).slice(0, 3).map((cat, idx) => (
+                 <div key={cat.category} className="text-center">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">{cat.category}</div>
+                    <div className="text-sm font-black text-slate-900">{cat.count} Items</div>
+                 </div>
+             ))}
           </div>
         </div>
       </div>
 
+      {/* Low Stock Footer Alert */}
+      {stats?.lowStockProducts && stats.lowStockProducts.length > 0 && (
+          <div className="mt-8 bg-red-50 border border-red-100 rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-bottom-4">
+              <div className="p-3 bg-red-500 text-white rounded-xl shadow-lg shadow-red-200">
+                  <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                  <h4 className="font-bold text-red-900">Inventory Alert</h4>
+                  <p className="text-sm text-red-700">There are {stats.lowStockProducts.length} items with critical stock levels. Review your inventory immediately.</p>
+              </div>
+              <Link to="/admin/products" className="px-4 py-2 bg-white text-red-600 font-bold rounded-lg border border-red-100 hover:bg-red-600 hover:text-white transition-all text-sm">
+                  Resolve Now
+              </Link>
+          </div>
+      )}
+
+      {/* Navigation Shortcuts */}
       <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
         <QuickActionCard 
-          title="New Product" 
-          desc="Add a new 3D item to your catalog" 
+          title="Product Catalog" 
+          desc="Manage 3D models and pricing" 
           to="/admin/products" 
           color="bg-indigo-600"
         />
         <QuickActionCard 
-          title="Process Orders" 
-          desc={`You have ${stats?.pendingOrders} orders waiting`} 
+          title="Order Pipeline" 
+          desc={`Process ${stats?.pendingOrders} pending requests`} 
           to="/admin/orders" 
           color="bg-emerald-600"
         />
         <QuickActionCard 
-          title="Campaigns" 
-          desc="Manage your homepage banners" 
+          title="Marketing Hub" 
+          desc="Homepage banners and sales" 
           to="/admin/marketing" 
           color="bg-amber-500"
         />
@@ -309,5 +374,6 @@ const QuickActionCard: React.FC<{ title: string, desc: string, to: string, color
     </div>
   </Link>
 );
+
 
 

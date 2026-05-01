@@ -39,10 +39,16 @@ router.get('/dashboard-stats', asyncHandler(async (req, res) => {
   
   const monthlyRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0
 
-  // 1. Orders by status
+  // 1. Orders by status (Count and Value)
   const ordersByStatus = await orders.aggregate([
-    { $group: { _id: '$status', count: { $sum: 1 } } },
-    { $project: { status: '$_id', count: 1, _id: 0 } }
+    { 
+      $group: { 
+        _id: '$status', 
+        count: { $sum: 1 },
+        value: { $sum: '$totalAmount' }
+      } 
+    },
+    { $project: { status: '$_id', count: 1, value: 1, _id: 0 } }
   ]).toArray()
 
   // 2. Revenue by day (last 7 days)
@@ -79,19 +85,50 @@ router.get('/dashboard-stats', asyncHandler(async (req, res) => {
     })
   }
 
-  // 3. Top categories
-  const topCategories = await products.aggregate([
-    { $group: { _id: '$category', count: { $sum: 1 } } },
-    { $sort: { count: -1 } },
-    { $limit: 5 },
-    { $project: { category: '$_id', count: 1, _id: 0 } }
-  ]).toArray()
+  // 3. Top categories (Count and Investment Value)
+  const productsList = await products.find({}).toArray()
+  const categoryMap = new Map()
+  
+  productsList.forEach(p => {
+    const cat = p.category || 'Uncategorized'
+    if (!categoryMap.has(cat)) {
+      categoryMap.set(cat, { category: cat, count: 0, totalValue: 0 })
+    }
+    const data = categoryMap.get(cat)
+    data.count += 1
+    data.totalValue += (p.stock || 0) * (p.price || 0)
+  })
+  
+  const topCategories = Array.from(categoryMap.values())
+    .sort((a, b) => b.totalValue - a.totalValue)
+    .slice(0, 5)
 
   // 4. Low stock products
   const lowStockProducts = await products.find(
     { stock: { $lt: 10 } },
     { projection: { name: 1, stock: 1 }, limit: 5 }
   ).toArray()
+
+  // 5. Top selling products
+  const allOrders = await orders.find({ status: { $ne: 'cancelled' } }).toArray()
+  const productSales = new Map()
+  
+  allOrders.forEach(order => {
+    if (order.items && Array.isArray(order.items)) {
+      order.items.forEach(item => {
+        if (!productSales.has(item.productName)) {
+          productSales.set(item.productName, { name: item.productName, salesCount: 0, revenue: 0 })
+        }
+        const stats = productSales.get(item.productName)
+        stats.salesCount += (item.quantity || 0)
+        stats.revenue += (item.quantity || 0) * (item.price || 0)
+      })
+    }
+  })
+
+  const topSellingProducts = Array.from(productSales.values())
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5)
   
   const stats = {
     totalProducts,
@@ -101,7 +138,8 @@ router.get('/dashboard-stats', asyncHandler(async (req, res) => {
     ordersByStatus,
     revenueByDay,
     topCategories,
-    lowStockProducts
+    lowStockProducts,
+    topSellingProducts
   }
   
   logger.success('Dashboard stats retrieved', { requestId: req.requestId, ...stats })

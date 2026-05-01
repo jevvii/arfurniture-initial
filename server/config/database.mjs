@@ -491,9 +491,10 @@ class SupabaseCollection {
             for (const [key, op] of Object.entries(stage.$group)) {
               if (key === '_id') continue
               if (op.$sum) {
-                const sumField = String(op.$sum).replace(/^\$/, '')
+                const sumField = typeof op.$sum === 'string' ? String(op.$sum).replace(/^\$/, '') : null
                 result[key] = documents.reduce((acc, doc) => {
                   if (op.$sum === 1) return acc + 1
+                  if (!sumField) return acc // Should not happen with op.$sum === 1 check above
                   const [val] = getValuesByPath(doc, sumField)
                   return acc + Number(val || 0)
                 }, 0)
@@ -514,11 +515,11 @@ class SupabaseCollection {
               for (const [opKey, op] of Object.entries(stage.$group)) {
                 if (opKey === '_id') continue
                 if (op.$sum) {
-                  const sumField = String(op.$sum).replace(/^\$/, '')
+                  const sumField = typeof op.$sum === 'string' ? String(op.$sum).replace(/^\$/, '') : null
                   const current = group[opKey] || 0
                   if (op.$sum === 1) {
                     group[opKey] = current + 1
-                  } else {
+                  } else if (sumField) {
                     const [val] = getValuesByPath(doc, sumField)
                     group[opKey] = current + Number(val || 0)
                   }

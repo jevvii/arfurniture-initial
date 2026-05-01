@@ -140,10 +140,11 @@ export interface DashboardStats {
   pendingOrders: number;
   activeCustomers: number;
   monthlyRevenue: number;
-  ordersByStatus: { status: string, count: number }[];
+  ordersByStatus: { status: string, count: number, value: number }[];
   revenueByDay: { date: string, revenue: number }[];
-  topCategories: { category: string, count: number }[];
+  topCategories: { category: string, count: number, totalValue: number }[];
   lowStockProducts: { name: string, stock: number }[];
+  topSellingProducts: { name: string, salesCount: number, revenue: number }[];
 }
 
 export interface StoreSettings {
