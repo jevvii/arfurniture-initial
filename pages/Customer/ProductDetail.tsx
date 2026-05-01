@@ -131,9 +131,10 @@ export const ProductDetail: React.FC = () => {
   }
 
   // Handle multiple images - resolve URLs for current host
-  const galleryImages = product.images && product.images.length > 0
-    ? product.images.map(img => resolveAssetUrl(img))
-    : [resolveAssetUrl(product.imageUrl)];
+  const galleryImages = [
+    { url: resolveAssetUrl(product.imageUrl), variant: undefined },
+    ...(product.variants?.map(v => ({ url: resolveAssetUrl(product.imageUrl), variant: v })) || [])
+  ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
@@ -234,20 +235,27 @@ export const ProductDetail: React.FC = () => {
             </div>
           </div>
 
-          {/* Gallery Thumbnails */}
-          {galleryImages.length > 1 && (
-            <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
-              {galleryImages.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => { setActiveImage(img); setViewMode('image'); }}
-                  className={`w-20 h-20 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all ${activeImage === img && viewMode === 'image' ? 'border-indigo-600 ring-2 ring-indigo-600/20' : 'border-slate-200 hover:border-indigo-300'}`}
-                >
-                  <img src={img} alt={`View ${idx + 1}`} className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
+          {/* Gallery Thumbnails (Synced with Variants) */}
+          <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
+            {galleryImages.map((img, idx) => (
+              <button
+                key={idx}
+                onClick={() => { 
+                  setSelectedVariant(img.variant); 
+                  setActiveImage(img.url);
+                  setViewMode('image'); 
+                }}
+                className={`w-20 h-20 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all ${selectedVariant?.id === img.variant?.id && viewMode === 'image' ? 'border-indigo-600 ring-2 ring-indigo-600/20' : 'border-slate-200 hover:border-indigo-300'}`}
+              >
+                <ColorTintedImage 
+                  src={img.url} 
+                  color={img.variant?.color} 
+                  alt={`View ${idx + 1}`} 
+                  className="w-full h-full" 
+                />
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Right Column: Details */}

@@ -25,10 +25,21 @@ export const ModelViewerWrapper: React.FC<ModelViewerProps> = ({ src, poster, al
 
   const applyColor = () => {
     const viewer = viewerRef.current;
-    if (!viewer || !color) return;
+    if (!viewer) return;
 
     const model = viewer.model;
     if (!model) return;
+
+    if (!color) {
+      // Reset to original material colors if no color is provided
+      model.materials.forEach((material: any) => {
+        if (material.pbrMetallicRoughness) {
+          // Setting to null or an empty array resets to glTF original
+          material.pbrMetallicRoughness.setBaseColorFactor(null);
+        }
+      });
+      return;
+    }
 
     const [r, g, b, a] = hexToRgba(color);
 

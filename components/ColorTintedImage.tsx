@@ -39,16 +39,16 @@ export const ColorTintedImage: React.FC<ColorTintedImageProps> = ({
         alt={alt || ''}
         className="w-full h-full object-cover"
         style={{
-          filter: 'grayscale(100%) contrast(1.1) brightness(1.05)'
+          filter: 'grayscale(100%) contrast(1.2) brightness(1.1)'
         }}
       />
       <div
         className="absolute inset-0 mix-blend-color"
         style={{ backgroundColor: color }}
       />
-      {/* Subtle overlay to restore some warmth/saturation lost during grayscale */}
+      {/* Subtle overlay to restore some depth and keep the background cleaner */}
       <div
-        className="absolute inset-0 mix-blend-overlay opacity-20"
+        className="absolute inset-0 mix-blend-multiply opacity-10"
         style={{ backgroundColor: color }}
       />
     </div>
