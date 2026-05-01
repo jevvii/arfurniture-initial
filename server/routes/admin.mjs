@@ -38,12 +38,70 @@ router.get('/dashboard-stats', asyncHandler(async (req, res) => {
   ]).toArray()
   
   const monthlyRevenue = revenueResult.length > 0 ? revenueResult[0].total : 0
+
+  // 1. Orders by status
+  const ordersByStatus = await orders.aggregate([
+    { $group: { _id: '$status', count: { $sum: 1 } } },
+    { $project: { status: '$_id', count: 1, _id: 0 } }
+  ]).toArray()
+
+  // 2. Revenue by day (last 7 days)
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  
+  const revenueByDayResult = await orders.aggregate([
+    {
+      $match: {
+        createdAt: { $gte: sevenDaysAgo },
+        status: { $ne: 'cancelled' }
+      }
+    },
+    {
+      $group: {
+        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+        revenue: { $sum: '$totalAmount' }
+      }
+    },
+    { $sort: { _id: 1 } },
+    { $project: { date: '$_id', revenue: 1, _id: 0 } }
+  ]).toArray()
+
+  // Fill in missing days with 0 revenue
+  const revenueByDay = []
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+    const dateStr = d.toISOString().split('T')[0]
+    const match = revenueByDayResult.find(r => r.date === dateStr)
+    revenueByDay.push({
+      date: new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      revenue: match ? match.revenue : 0
+    })
+  }
+
+  // 3. Top categories
+  const topCategories = await products.aggregate([
+    { $group: { _id: '$category', count: { $sum: 1 } } },
+    { $sort: { count: -1 } },
+    { $limit: 5 },
+    { $project: { category: '$_id', count: 1, _id: 0 } }
+  ]).toArray()
+
+  // 4. Low stock products
+  const lowStockProducts = await products.find(
+    { stock: { $lt: 10 } },
+    { projection: { name: 1, stock: 1 }, limit: 5 }
+  ).toArray()
   
   const stats = {
     totalProducts,
     pendingOrders,
     activeCustomers,
-    monthlyRevenue
+    monthlyRevenue,
+    ordersByStatus,
+    revenueByDay,
+    topCategories,
+    lowStockProducts
   }
   
   logger.success('Dashboard stats retrieved', { requestId: req.requestId, ...stats })
