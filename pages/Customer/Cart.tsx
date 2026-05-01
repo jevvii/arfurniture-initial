@@ -7,6 +7,7 @@ import { Address, CartItem, ProductVariant } from '../../types';
 import { CURRENCY, resolveAssetUrl } from '../../constants';
 import { db } from '../../services/db';
 import { AddressManager } from '../../components/AddressManager';
+import { ColorTintedImage } from '../../components/ColorTintedImage';
 
 interface CheckoutForm {
     recipientName: string;
@@ -42,11 +43,16 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({ item, onClose, onSele
                             className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${!item.selectedVariant ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-500/20' : 'border-slate-100 hover:border-slate-300'}`}
                         >
                             <div className="w-12 h-12 rounded-full shadow-sm border border-slate-100 relative overflow-hidden">
-                                <span className="absolute inset-0" style={{ backgroundColor: item.color || '#f8f8f8' }}></span>
+                                <ColorTintedImage
+                                    src={resolveAssetUrl(item.imageUrl)}
+                                    color={item.color}
+                                    alt={item.colorName || 'Default'}
+                                    className="w-full h-full"
+                                />
                             </div>
                             <span className="font-medium text-sm text-slate-700">{item.colorName || 'Default'}</span>
                         </button>
-                        
+
                         {item.variants?.map(variant => (
                             <button
                                 key={variant.id}
@@ -54,7 +60,12 @@ const VariantSelector: React.FC<VariantSelectorProps> = ({ item, onClose, onSele
                                 className={`flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all ${item.selectedVariant?.id === variant.id ? 'border-indigo-600 bg-indigo-50/50 ring-2 ring-indigo-500/20' : 'border-slate-100 hover:border-slate-300'}`}
                             >
                                 <div className="w-12 h-12 rounded-full shadow-sm border border-slate-100 relative overflow-hidden">
-                                    <span className="absolute inset-0" style={{ backgroundColor: variant.color }}></span>
+                                    <ColorTintedImage
+                                        src={resolveAssetUrl(variant.imageUrl || item.imageUrl)}
+                                        color={variant.color}
+                                        alt={variant.name}
+                                        className="w-full h-full"
+                                    />
                                 </div>
                                 <span className="font-medium text-sm text-slate-700">{variant.name}</span>
                             </button>
@@ -392,7 +403,12 @@ export const Cart: React.FC = () => {
                                         />
                                     </div>
                                     <div className="w-24 h-24 bg-slate-100 rounded-lg overflow-hidden flex-shrink-0 relative">
-                                        <img src={resolveAssetUrl(item.selectedVariant ? item.selectedVariant.imageUrl : item.imageUrl)} alt={item.name} className="w-full h-full object-cover" />
+                                        <ColorTintedImage
+                                            src={resolveAssetUrl(item.selectedVariant?.imageUrl || item.imageUrl)}
+                                            color={item.selectedVariant?.color}
+                                            alt={item.name}
+                                            className="w-full h-full"
+                                        />
                                         {item.selectedVariant && (
                                             <div className="absolute bottom-0 right-0 w-4 h-4 rounded-tl-md" style={{ backgroundColor: item.selectedVariant.color }}></div>
                                         )}

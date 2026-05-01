@@ -45,16 +45,9 @@ export const ProductManager: React.FC = () => {
   const [newVariant, setNewVariant] = useState({
     name: '',
     color: '#000000',
-    stock: '',
-    imageUrl: '',
-    arModelUrl: ''
+    stock: ''
   });
-  const [variantFile, setVariantFile] = useState<File | null>(null);
-  const [variantFileType, setVariantFileType] = useState<'image' | 'model'>('image');
-  const [variantFilePreview, setVariantFilePreview] = useState('');
   const [uploadingVariant, setUploadingVariant] = useState(false);
-
-  const variantFileInputRef = useRef<HTMLInputElement>(null);
 
   // Form State - ensure all values are always defined (never undefined) to prevent controlled/uncontrolled warnings
   const [formData, setFormData] = useState({
@@ -161,10 +154,7 @@ export const ProductManager: React.FC = () => {
     // Reset additional images
     setAdditionalImages([]);
     setVariants([]);
-    setNewVariant({ name: '', color: '#000000', stock: '', imageUrl: '', arModelUrl: '' });
-    setVariantFile(null);
-    setVariantFileType('image');
-    setVariantFilePreview('');
+    setNewVariant({ name: '', color: '#000000', stock: '' });
     setIsModalOpen(true);
   };
 
@@ -301,43 +291,9 @@ export const ProductManager: React.FC = () => {
     setAdditionalImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Variant Handlers
-  const handleVariantFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate based on file type
-      if (variantFileType === 'image') {
-        if (!file.type.startsWith('image/')) {
-          setFormError('Please select a valid image file');
-          return;
-        }
-        setVariantFile(file);
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          setVariantFilePreview((ev.target?.result as string) || '');
-        };
-        reader.readAsDataURL(file);
-      } else {
-        if (!file.name.toLowerCase().endsWith('.glb')) {
-          setFormError('Please select a valid .glb file');
-          return;
-        }
-        setVariantFile(file);
-        setVariantFilePreview(file.name);
-      }
-    }
-  };
-
   const handleAddVariant = async () => {
     if (!newVariant.name || !newVariant.color) {
       setFormError('Variant name and color are required');
-      return;
-    }
-
-    // Check that we have exactly ONE file (either new upload or existing URL)
-    const hasFile = variantFile || newVariant.imageUrl || newVariant.arModelUrl;
-    if (!hasFile) {
-      setFormError('Variant file is required (either image or 3D model)');
       return;
     }
 
@@ -349,18 +305,6 @@ export const ProductManager: React.FC = () => {
 
     try {
       setUploadingVariant(true);
-      let imageUrl = newVariant.imageUrl;
-      let modelUrl = newVariant.arModelUrl;
-
-      // Upload the file if one was selected
-      if (variantFile) {
-        const uploadedUrl = await uploadFile(variantFile, variantFileType, formData.name, newVariant.name);
-        if (variantFileType === 'image') {
-          imageUrl = uploadedUrl;
-        } else {
-          modelUrl = uploadedUrl;
-        }
-      }
 
       let updatedVariants;
       if (editingVariantId) {
@@ -369,9 +313,7 @@ export const ProductManager: React.FC = () => {
           ...v,
           name: newVariant.name,
           color: newVariant.color,
-          stock: parseInt(newVariant.stock) || 0,
-          imageUrl: imageUrl,
-          arModelUrl: modelUrl
+          stock: parseInt(newVariant.stock) || 0
         } : v);
         setEditingVariantId(null);
       } else {
@@ -380,9 +322,7 @@ export const ProductManager: React.FC = () => {
           id: Date.now().toString(),
           name: newVariant.name,
           color: newVariant.color,
-          stock: parseInt(newVariant.stock) || 0,
-          imageUrl: imageUrl,
-          arModelUrl: modelUrl
+          stock: parseInt(newVariant.stock) || 0
         };
         updatedVariants = [...variants, variantToAdd];
       }
@@ -407,15 +347,12 @@ export const ProductManager: React.FC = () => {
       setVariants(updatedVariants);
 
       // Reset form
-      setNewVariant({ name: '', color: '#000000', stock: '', imageUrl: '', arModelUrl: '' });
-      setVariantFile(null);
-      setVariantFileType('image');
-      setVariantFilePreview('');
+      setNewVariant({ name: '', color: '#000000', stock: '' });
       setFormError('');
 
     } catch (error) {
       console.error("Failed to add variant", error);
-      setFormError("Failed to upload variant assets");
+      setFormError("Failed to save variant");
     } finally {
       setUploadingVariant(false);
     }
@@ -423,24 +360,18 @@ export const ProductManager: React.FC = () => {
 
   const handleRemoveVariant = async (id: string) => {
     if (!editingId) {
-      // If not editing a product, just remove from local state
       setVariants(prev => prev.filter(v => v.id !== id));
       if (editingVariantId === id) {
         setEditingVariantId(null);
-        setNewVariant({ name: '', color: '#000000', stock: '', imageUrl: '', arModelUrl: '' });
-        setVariantFile(null);
-        setVariantFileType('image');
-        setVariantFilePreview('');
+        setNewVariant({ name: '', color: '#000000', stock: '' });
       }
       return;
     }
 
     try {
-      // Remove from local state
       const updatedVariants = variants.filter(v => v.id !== id);
       setVariants(updatedVariants);
 
-      // Immediately save to database (this will trigger backend cleanup)
       const productData = {
         ...formData,
         price: parseFloat(formData.price) || 0,
@@ -460,10 +391,7 @@ export const ProductManager: React.FC = () => {
 
       if (editingVariantId === id) {
         setEditingVariantId(null);
-        setNewVariant({ name: '', color: '#000000', stock: '', imageUrl: '', arModelUrl: '' });
-        setVariantFile(null);
-        setVariantFileType('image');
-        setVariantFilePreview('');
+        setNewVariant({ name: '', color: '#000000', stock: '' });
       }
     } catch (error) {
       console.error("Failed to remove variant", error);
@@ -472,24 +400,12 @@ export const ProductManager: React.FC = () => {
   };
 
   const handleEditVariant = (variant: ProductVariant) => {
-    console.log("Editing variant:", variant);
     setEditingVariantId(variant.id);
     setNewVariant({
       name: variant.name || '',
       color: variant.color || '#000000',
-      stock: variant.stock?.toString() || '0',
-      imageUrl: variant.imageUrl || '',
-      arModelUrl: variant.arModelUrl || ''
+      stock: variant.stock?.toString() || '0'
     });
-    // Determine which file type is present
-    if (variant.imageUrl) {
-      setVariantFileType('image');
-      setVariantFilePreview(variant.imageUrl);
-    } else if (variant.arModelUrl) {
-      setVariantFileType('model');
-      setVariantFilePreview(getFilenameFromUrl(variant.arModelUrl));
-    }
-    setVariantFile(null); // Clear any pending file
 
     // Scroll to variant form
     const variantForm = document.getElementById('variant-form');
@@ -498,10 +414,7 @@ export const ProductManager: React.FC = () => {
 
   const cancelEditVariant = () => {
     setEditingVariantId(null);
-    setNewVariant({ name: '', color: '#000000', stock: '', imageUrl: '', arModelUrl: '' });
-    setVariantFile(null);
-    setVariantFileType('image');
-    setVariantFilePreview('');
+    setNewVariant({ name: '', color: '#000000', stock: '' });
   };
 
   const validateForm = () => {
@@ -604,10 +517,7 @@ export const ProductManager: React.FC = () => {
       // Reset additional images
       setAdditionalImages([]);
       setVariants([]);
-      setNewVariant({ name: '', color: '#000000', stock: '', imageUrl: '', arModelUrl: '' });
-      setVariantFile(null);
-      setVariantFileType('image');
-      setVariantFilePreview('');
+      setNewVariant({ name: '', color: '#000000', stock: '' });
     } catch (err) {
       setFormError("Failed to save product. Please try again.");
       setUploadingImage(false);
@@ -934,9 +844,6 @@ export const ProductManager: React.FC = () => {
                     <div className="space-y-2 mb-4">
                       {variants.map((v) => (
                         <div key={v.id} className="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-200">
-                          <div className="w-10 h-10 rounded overflow-hidden bg-slate-100 flex-shrink-0">
-                            <img src={resolveAssetUrl(v.imageUrl)} alt={v.name} className="w-full h-full object-cover" />
-                          </div>
                           <div className="w-6 h-6 rounded-full border border-slate-200 flex-shrink-0" style={{ backgroundColor: v.color }}></div>
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium text-slate-900 truncate">{v.name}</div>
@@ -972,11 +879,7 @@ export const ProductManager: React.FC = () => {
                         <div className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
                           {editingVariantId ? 'Editing Variant' : 'Add New Variant'}
                         </div>
-                        {variantFileType === 'image' && (variantFilePreview || newVariant.imageUrl) && (
-                          <div className="w-6 h-6 rounded bg-slate-100 border border-slate-200 overflow-hidden">
-                            <img src={variantFilePreview ? (variantFilePreview.startsWith('data:') ? variantFilePreview : resolveAssetUrl(variantFilePreview)) : resolveAssetUrl(newVariant.imageUrl)} alt="" className="w-full h-full object-cover" />
-                          </div>
-                        )}
+                        <div className="w-6 h-6 rounded-full border border-slate-200" style={{ backgroundColor: newVariant.color }}></div>
                       </div>
                       {editingVariantId && (
                         <button
@@ -1011,52 +914,6 @@ export const ProductManager: React.FC = () => {
                         />
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        {/* File Type Selector */}
-                        <div className="flex rounded-lg border border-slate-200 overflow-hidden">
-                          <button
-                            type="button"
-                            onClick={() => setVariantFileType('image')}
-                            className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors ${variantFileType === 'image' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-400 hover:bg-slate-50'}`}
-                          >
-                            <Image className="w-4 h-4 mx-auto" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setVariantFileType('model')}
-                            className={`px-3 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors ${variantFileType === 'model' ? 'bg-purple-600 text-white' : 'bg-white text-slate-400 hover:bg-slate-50'}`}
-                          >
-                            <Box className="w-4 h-4 mx-auto" />
-                          </button>
-                        </div>
-
-                        {/* Single File Upload */}
-                        <input
-                          ref={variantFileInputRef}
-                          type="file"
-                          accept={variantFileType === 'image' ? 'image/*' : '.glb'}
-                          onChange={handleVariantFileChange}
-                          className="hidden"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => variantFileInputRef.current?.click()}
-                          className={`flex-1 px-3 py-2 border border-dashed rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 h-[42px] transition-colors ${variantFile || (variantFileType === 'image' ? newVariant.imageUrl : newVariant.arModelUrl)
-                            ? (variantFileType === 'image' ? 'bg-indigo-50 border-indigo-200 text-indigo-600' : 'bg-purple-50 border-purple-200 text-purple-600')
-                            : 'bg-slate-50 border-slate-200 text-slate-400 hover:border-slate-300'
-                            }`}
-                        >
-                          {variantFileType === 'image' ? <Image className="w-4 h-4" /> : <Box className="w-4 h-4" />}
-                          {variantFile
-                            ? `New: ${variantFile.name}`
-                            : (variantFileType === 'image'
-                              ? (newVariant.imageUrl ? 'Image Ready' : 'Upload Image')
-                              : (newVariant.arModelUrl ? 'Model Ready' : 'Upload Model')
-                            )
-                          }
-                        </button>
-                      </div>
-
                       <button
                         type="button"
                         onClick={handleAddVariant}
@@ -1066,7 +923,7 @@ export const ProductManager: React.FC = () => {
                         {uploadingVariant ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            {editingVariantId ? 'Updating...' : 'Uploading...'}
+                            {editingVariantId ? 'Updating...' : 'Saving...'}
                           </>
                         ) : editingVariantId ? (
                           <>

@@ -8,6 +8,7 @@ import { askProductAssistant } from '../../services/gemini';
 import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { ModelViewerWrapper } from '../../components/ModelViewerWrapper';
+import { ColorTintedImage } from '../../components/ColorTintedImage';
 import { QRCodeModal } from '../../components/QRCodeModal';
 import { CURRENCY, resolveAssetUrl } from '../../constants';
 
@@ -142,7 +143,12 @@ export const ProductDetail: React.FC = () => {
           <div className="text-center max-w-sm">
             {/* Product preview */}
             <div className="w-32 h-32 mx-auto mb-6 rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20">
-              <img src={resolveAssetUrl(product.imageUrl)} alt={product.name} className="w-full h-full object-cover" />
+              <ColorTintedImage
+                src={resolveAssetUrl(selectedVariant?.imageUrl || product.imageUrl)}
+                color={selectedVariant?.color}
+                alt={product.name}
+                className="w-full h-full"
+              />
             </div>
 
             <h1 className="text-2xl font-bold text-white mb-2">{product.name}</h1>
@@ -192,9 +198,10 @@ export const ProductDetail: React.FC = () => {
             {viewMode === '3d' ? (
               <div className="w-full h-full animate-in fade-in duration-500">
                 <ModelViewerWrapper
-                  src={resolveAssetUrl(selectedVariant ? selectedVariant.arModelUrl : product.arModelUrl)}
+                  src={resolveAssetUrl(selectedVariant?.arModelUrl || product.arModelUrl)}
                   poster={activeImage}
                   alt={`3D model of ${product.name}`}
+                  color={selectedVariant?.color}
                 />
                 <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-lg text-xs font-medium text-slate-600 pointer-events-none z-10">
                   Interactive 3D
@@ -202,10 +209,11 @@ export const ProductDetail: React.FC = () => {
               </div>
             ) : (
               <div className="w-full h-full animate-in fade-in duration-500">
-                <img
+                <ColorTintedImage
                   src={activeImage}
+                  color={selectedVariant?.color}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full"
                 />
               </div>
             )}
@@ -285,7 +293,8 @@ export const ProductDetail: React.FC = () => {
                     key={variant.id}
                     onClick={() => {
                       setSelectedVariant(variant);
-                      setActiveImage(resolveAssetUrl(variant.imageUrl));
+                      // Use dedicated variant image if available, otherwise tint the base image
+                      setActiveImage(resolveAssetUrl(variant.imageUrl || product.imageUrl));
                     }}
                     className={`group relative w-12 h-12 rounded-full border-2 transition-all ${selectedVariant?.id === variant.id ? 'border-indigo-600 ring-2 ring-indigo-600/20 scale-110' : 'border-slate-200 hover:border-slate-400'
                       }`}

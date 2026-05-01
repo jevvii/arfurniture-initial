@@ -54,8 +54,9 @@ export interface ProductVariant {
   name: string; // e.g., "Red", "Blue"
   color: string; // Hex code or standard color name for UI swatches
   stock?: number;
-  imageUrl: string;
-  arModelUrl: string;
+  // Optional: if provided, use dedicated asset; otherwise tint the base product asset
+  imageUrl?: string;
+  arModelUrl?: string;
 }
 
 export interface CartItem extends Product {
