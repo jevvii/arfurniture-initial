@@ -81,7 +81,7 @@ export const AdminDashboard: React.FC = () => {
         <StatCard 
           icon={<TrendingUp className="w-6 h-6 text-amber-600" />}
           label="Monthly Revenue"
-          value={`${CURRENCY}${stats?.monthlyRevenue.toLocaleString() || '0'}`}
+          value={`${CURRENCY}${stats?.monthlyRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}`}
           bgColor="bg-amber-50"
           trend="+23.5%"
         />
@@ -150,7 +150,7 @@ export const AdminDashboard: React.FC = () => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={stats?.ordersByStatus}
+                  data={stats?.ordersByStatus || []}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -158,7 +158,7 @@ export const AdminDashboard: React.FC = () => {
                   paddingAngle={5}
                   dataKey="count"
                 >
-                  {stats?.ordersByStatus.map((entry, index) => (
+                  {(stats?.ordersByStatus || []).map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -167,7 +167,9 @@ export const AdminDashboard: React.FC = () => {
             </ResponsiveContainer>
             {/* Center label */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-              <div className="text-2xl font-black text-slate-800">{stats?.ordersByStatus.reduce((acc, curr) => acc + curr.count, 0)}</div>
+              <div className="text-2xl font-black text-slate-800">
+                {(stats?.ordersByStatus || []).reduce((acc, curr) => acc + (Number(curr.count) || 0), 0)}
+              </div>
               <div className="text-[10px] uppercase font-bold text-slate-400">Total Orders</div>
             </div>
           </div>

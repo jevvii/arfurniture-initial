@@ -482,18 +482,71 @@ class SupabaseCollection {
         if (stage.$match) {
           documents = documents.filter((document) => matchesQuery(document, stage.$match))
         } else if (stage.$group) {
-          if (
-            stage.$group._id === null &&
-            stage.$group.total &&
-            stage.$group.total.$sum
-          ) {
-            const sumField = String(stage.$group.total.$sum).replace(/^\$/, '')
-            const total = documents.reduce((accumulator, document) => {
-              const [value] = getValuesByPath(document, sumField)
-              return accumulator + Number(value || 0)
-            }, 0)
-            documents = [{ _id: null, total }]
+          const groupById = stage.$group._id
+          const groups = new Map()
+
+          if (groupById === null) {
+            // Special case: Single group for all documents
+            const result = { _id: null }
+            for (const [key, op] of Object.entries(stage.$group)) {
+              if (key === '_id') continue
+              if (op.$sum) {
+                const sumField = String(op.$sum).replace(/^\$/, '')
+                result[key] = documents.reduce((acc, doc) => {
+                  if (op.$sum === 1) return acc + 1
+                  const [val] = getValuesByPath(doc, sumField)
+                  return acc + Number(val || 0)
+                }, 0)
+              }
+            }
+            documents = [result]
+          } else if (typeof groupById === 'string' && groupById.startsWith('$')) {
+            // Group by a field
+            const fieldName = groupById.slice(1)
+            for (const doc of documents) {
+              const [key] = getValuesByPath(doc, fieldName)
+              const groupKey = key ?? 'null'
+              if (!groups.has(groupKey)) {
+                groups.set(groupKey, { _id: groupKey })
+              }
+              const group = groups.get(groupKey)
+              
+              for (const [opKey, op] of Object.entries(stage.$group)) {
+                if (opKey === '_id') continue
+                if (op.$sum) {
+                  const sumField = String(op.$sum).replace(/^\$/, '')
+                  const current = group[opKey] || 0
+                  if (op.$sum === 1) {
+                    group[opKey] = current + 1
+                  } else {
+                    const [val] = getValuesByPath(doc, sumField)
+                    group[opKey] = current + Number(val || 0)
+                  }
+                }
+              }
+            }
+            documents = Array.from(groups.values())
           }
+        } else if (stage.$sort) {
+          documents = sortDocuments(documents, stage.$sort)
+        } else if (stage.$limit) {
+          documents = documents.slice(0, stage.$limit)
+        } else if (stage.$project) {
+          documents = documents.map(doc => {
+            const projected = {}
+            for (const [key, value] of Object.entries(stage.$project)) {
+              if (value === 1) {
+                // If it's a rename (like status: '$_id' in the original query)
+                // but the original query was { status: '$_id', count: 1, _id: 0 }
+                // In our case doc._id is the group key.
+                projected[key] = doc[key] ?? doc._id
+              } else if (typeof value === 'string' && value.startsWith('$')) {
+                const sourceField = value.slice(1)
+                projected[key] = doc[sourceField] ?? (sourceField === '_id' ? doc._id : undefined)
+              }
+            }
+            return projected
+          })
         }
       }
 
