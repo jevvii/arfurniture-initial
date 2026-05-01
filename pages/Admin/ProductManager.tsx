@@ -105,11 +105,13 @@ export const ProductManager: React.FC = () => {
       price: product.price?.toString() || '',
       stock: product.stock?.toString() || '',
       category: product.category || 'Chairs',
-      color: product.color || '#000000',
+      color: product.color || '',
       colorName: product.colorName || '',
       imageUrl: product.imageUrl || '',
       arModelUrl: product.arModelUrl || '',
       width: product.dimensions?.width?.toString() || '',
+      height: product.dimensions?.height?.toString() || '',
+      depth: product.dimensions?.depth?.toString() || '',
       unit: product.dimensions?.unit || 'cm',
       isFeatured: product.isFeatured || false,
       isNewArrival: product.isNewArrival || false,
@@ -498,12 +500,13 @@ export const ProductManager: React.FC = () => {
         price: '',
         stock: '',
         category: 'Chairs',
-        color: '#000000',
+        color: '',
         colorName: '',
         imageUrl: '',
         arModelUrl: '',
         width: '',
         height: '',
+        depth: '',
         unit: 'cm',
         isFeatured: false,
         isNewArrival: false,
@@ -691,11 +694,10 @@ export const ProductManager: React.FC = () => {
                     </div>
                     <div className="flex gap-4 items-end">
                       <div className="flex-[2]">
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">Color Name *</label>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1">Color Name (Optional)</label>
                         <input
                           type="text"
                           name="colorName"
-                          required
                           value={formData.colorName || ''}
                           onChange={handleInputChange}
                           className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none h-[42px]"
@@ -704,7 +706,7 @@ export const ProductManager: React.FC = () => {
                       </div>
                       <div className="flex-[1.5]">
                         <ColorPicker
-                          label="Color Value *"
+                          label="Color Value (Optional)"
                           value={formData.color}
                           onChange={(color) => setFormData(prev => ({ ...prev, color }))}
                         />
