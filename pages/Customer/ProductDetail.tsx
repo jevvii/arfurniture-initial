@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, Link, useSearchParams } from 'react-router-dom';
-import { ShoppingCart, Box, Wand2, Send, Smartphone, Truck, RefreshCw, ShieldCheck, Image as ImageIcon, CheckCircle } from 'lucide-react';
+import { ShoppingCart, Box, Wand2, Send, Smartphone, Truck, RefreshCw, ShieldCheck, Image as ImageIcon, CheckCircle, Plus, Minus } from 'lucide-react';
 import { Product, ProductVariant } from '../../types';
 import { db } from '../../services/db';
 import { askProductAssistant } from '../../services/gemini';
@@ -27,17 +27,30 @@ export const ProductDetail: React.FC = () => {
   const [viewMode, setViewMode] = useState<'image' | '3d'>('image');
   const [activeImage, setActiveImage] = useState<string>('');
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | undefined>(undefined);
+  const [quantity, setQuantity] = useState(1);
 
   // Cart & Modal State
-  const { addToCart } = useCart();
+  const { cart, addToCart } = useCart();
   const { user } = useAuth();
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
-  const [showToast, setShowToast] = useState(false);
 
   // Chat state
   const [chatQuestion, setChatQuestion] = useState('');
   const [chatAnswer, setChatAnswer] = useState('');
   const [isChatting, setIsChatting] = useState(false);
+
+  const isAvailable = (selectedVariant?.stock ?? product?.stock ?? 0) > 0;
+
+  // Calculate max allowed quantity based on stock and items already in cart
+  const getAvailableStockForSelection = () => {
+    if (!product) return 0;
+    const totalStock = selectedVariant?.stock ?? product.stock;
+    const inCart = cart.find(item => 
+      item._id === product._id && 
+      (selectedVariant ? item.selectedVariant?.id === selectedVariant.id : !item.selectedVariant)
+    )?.quantity || 0;
+    return Math.max(0, totalStock - inCart);
+  };
 
   useEffect(() => {
     const loadData = async () => {
@@ -76,6 +89,7 @@ export const ProductDetail: React.FC = () => {
         setChatAnswer('');
         setChatQuestion('');
         setLoading(false);
+        setQuantity(1);
       }
     };
     loadData();
@@ -116,14 +130,21 @@ export const ProductDetail: React.FC = () => {
   }
 
   const handleAddToCart = async () => {
-    if (product) {
-      await addToCart(product, selectedVariant);
-      // Only show toast if user is logged in (addToCart returns early if not)
-      if (user) {
-        setShowToast(true);
-        setTimeout(() => setShowToast(false), 3000);
-      }
+    if (!product) return;
+    
+    const availableToAdd = getAvailableStockForSelection();
+    if (availableToAdd <= 0) {
+      alert("You already have the maximum available stock for this item in your cart.");
+      return;
     }
+
+    if (quantity > availableToAdd) {
+        alert(`Only ${availableToAdd} more items can be added to your cart.`);
+        setQuantity(availableToAdd);
+        return;
+    }
+
+    await addToCart(product, selectedVariant, quantity);
   };
 
   if (loading || !product) {
@@ -140,19 +161,20 @@ export const ProductDetail: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
       {/* Full-screen AR Launch Overlay (shown when coming from QR scan) */}
       {showARLaunch && (
-      <div className="fixed inset-0 z-[100] bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-900 flex flex-col items-center justify-center p-6">
-      <div className="text-center max-w-sm">
-      {/* Product preview */}
-      <div className="w-32 h-32 mx-auto mb-6 rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20">
-        <ColorTintedImage
-          src={resolveAssetUrl(product.imageUrl)}
-          color={selectedVariant?.color || product.color}
-          alt={product.name}
-          className="w-full h-full"
-        />
-      </div>
+        <div className="fixed inset-0 z-[100] bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-900 flex flex-col items-center justify-center p-6">
+          <div className="text-center max-w-sm">
+            {/* Product preview */}
+            <div className="w-32 h-32 mx-auto mb-6 rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20">
+              <ColorTintedImage
+                src={resolveAssetUrl(product.imageUrl)}
+                color={selectedVariant?.color || product.color}
+                alt={product.name}
+                className="w-full h-full"
+              />
+            </div>
 
-      <h1 className="text-2xl font-bold text-white mb-2">{product.name}</h1>            <p className="text-indigo-200 mb-8">Ready to view in your space</p>
+            <h1 className="text-2xl font-bold text-white mb-2">{product.name}</h1>
+            <p className="text-indigo-200 mb-8">Ready to view in your space</p>
 
             {/* Big AR Launch Button */}
             <button
@@ -171,21 +193,6 @@ export const ProductDetail: React.FC = () => {
             >
               View product details instead
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Toast Notification */}
-      {showToast && (
-        <div className="fixed top-24 right-4 z-50 animate-in slide-in-from-right duration-300">
-          <div className="bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3">
-            <div className="bg-green-500/20 p-2 rounded-full">
-              <CheckCircle className="w-5 h-5 text-green-400" />
-            </div>
-            <div>
-              <h4 className="font-bold text-sm">Added to Cart</h4>
-              <p className="text-slate-300 text-xs">{product.name}</p>
-            </div>
           </div>
         </div>
       )}
@@ -407,20 +414,45 @@ export const ProductDetail: React.FC = () => {
                 </div>
               </div>
             </div>
-
           </div>
 
           {/* Actions */}
           <div className="pt-6 border-t border-slate-200 mt-auto">
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 mb-8">
+              <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden h-[56px] w-fit">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="px-4 py-2 hover:bg-slate-50 transition-colors"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="px-6 font-bold text-lg min-w-[60px] text-center">{quantity}</span>
+                <button
+                  onClick={() => {
+                    const availableToAdd = getAvailableStockForSelection();
+                    if (quantity < availableToAdd) {
+                      setQuantity(quantity + 1);
+                    }
+                  }}
+                  className="px-4 py-2 hover:bg-slate-50 transition-colors"
+                  disabled={quantity >= getAvailableStockForSelection()}
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+
               <button
                 onClick={handleAddToCart}
-                className="flex-1 bg-slate-900 text-white px-6 py-4 rounded-xl font-bold text-lg hover:bg-slate-800 transition-all active:scale-95 flex items-center justify-center gap-3 shadow-lg shadow-slate-900/20"
+                disabled={!isAvailable}
+                className={`flex-1 flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-bold text-white transition-all shadow-lg active:scale-95 ${isAvailable ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200' : 'bg-slate-400 cursor-not-allowed shadow-none'
+                  }`}
               >
                 <ShoppingCart className="w-5 h-5" />
-                Add to Cart
+                {isAvailable ? 'Add to Cart' : 'Out of Stock'}
               </button>
+            </div>
 
+            <div className="flex flex-col sm:flex-row gap-4">
               {/* QR Modal Trigger */}
               <button
                 onClick={() => setIsQRModalOpen(true)}

@@ -48,6 +48,8 @@ export const AddressManager: React.FC<AddressManagerProps> = ({ userId, selected
 
   const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent bubbling to parent forms
+    
     try {
       if (isEditing) {
         const updated = await updateAddress(userId, isEditing, addressForm);
@@ -55,10 +57,8 @@ export const AddressManager: React.FC<AddressManagerProps> = ({ userId, selected
       } else {
         const added = await addAddress(userId, addressForm);
         setAddresses([...addresses, added]);
-        // Optionally auto-select the new address
-        if (selectable) {
-            onSelectAddress(added);
-        }
+        // Auto-select the new address
+        onSelectAddress(added);
       }
       closeModal();
     } catch (err) {
@@ -198,6 +198,7 @@ export const AddressManager: React.FC<AddressManagerProps> = ({ userId, selected
       </div>
 
         <button 
+          type="button"
           onClick={startAdding}
           className="w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-500 hover:border-indigo-500 hover:text-indigo-600 hover:bg-indigo-50/50 font-medium transition-all flex items-center justify-center gap-2 group min-h-[60px] flex-shrink-0"
         >

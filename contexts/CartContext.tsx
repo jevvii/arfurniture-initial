@@ -3,7 +3,9 @@ import { CartItem, Product, ProductVariant } from '../types';
 
 export interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: Product, variant?: ProductVariant) => Promise<void>;
+  toast: { show: boolean, productName: string } | null;
+  addToCart: (product: Product, variant?: ProductVariant, quantity?: number) => Promise<void>;
+  showSuccessToast: (productName: string) => void;
   removeFromCart: (id: string, variantId?: string) => Promise<void>;
   updateQuantity: (id: string, delta: number, variantId?: string) => Promise<void>;
   clearCart: () => Promise<void>;

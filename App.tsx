@@ -99,21 +99,35 @@ const App: React.FC = () => {
   });
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [pendingCartAction, setPendingCartAction] = useState<{ product: Product, variant?: ProductVariant, quantity: number } | null>(null);
+  const [toast, setToast] = useState<{ show: boolean, productName: string } | null>(null);
+
+  const showSuccessToast = (productName: string) => {
+    setToast({ show: true, productName });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Load cart on initial mount if user exists (was persisted)
   useEffect(() => {
     if (user) {
       db.getCart(user._id).then(setCart).catch(console.error);
     }
-    // Only run on initial mount to fetch initial cart for persisted user
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Effect to handle pending cart action after login
+  useEffect(() => {
+    if (user && pendingCartAction) {
+      addToCart(pendingCartAction.product, pendingCartAction.variant, pendingCartAction.quantity);
+      setPendingCartAction(null);
+    }
+  }, [user, pendingCartAction]);
 
   // Customer login only
   const handleUserLogin = async (email: string, pass: string) => {
     const customer = await loginUser(email, pass);
     setUser(customer);
     localStorage.setItem('arfurniture_user', JSON.stringify(customer));
+    
     // Load cart from database after login
     try {
       const userCart = await db.getCart(customer._id);
@@ -136,7 +150,7 @@ const App: React.FC = () => {
     const user = await registerUser(fname, lname, email, pass, mname);
     setUser(user);
     localStorage.setItem('arfurniture_user', JSON.stringify(user));
-    // Load cart from database after signup (will be empty for new users)
+    
     try {
       const userCart = await db.getCart(user._id);
       setCart(userCart);
@@ -167,14 +181,32 @@ const App: React.FC = () => {
   };
 
   // Cart Handlers - Require authentication
-  const addToCart = async (product: Product, variant?: ProductVariant) => {
+  const addToCart = async (product: Product, variant?: ProductVariant, quantity = 1) => {
     if (!user) {
+      setPendingCartAction({ product, variant, quantity });
       setAuthModalOpen(true);
       return;
     }
 
+    // Stock Validation
+    const availableStock = variant?.stock ?? product.stock;
+    const currentItemInCart = cart.find(item => 
+      item._id === product._id && 
+      (variant ? item.selectedVariant?.id === variant.id : !item.selectedVariant)
+    );
+    const currentQtyInCart = currentItemInCart?.quantity || 0;
+
+    if (currentQtyInCart + quantity > availableStock) {
+      alert(`Cannot add ${quantity} more: only ${availableStock - currentQtyInCart} additional items in stock.`);
+      return;
+    }
+
     try {
-      await db.addToCart(user._id, product._id, variant?.id, 1);
+      await db.addToCart(user._id, product._id, variant?.id, quantity);
+      
+      // Show confirmation toast
+      showSuccessToast(product.name);
+
       // Update local state
       setCart(prev => {
         const existing = prev.find(item =>
@@ -185,11 +217,11 @@ const App: React.FC = () => {
         if (existing) {
           return prev.map(item =>
             (item._id === product._id && (variant ? item.selectedVariant?.id === variant.id : !item.selectedVariant))
-              ? { ...item, quantity: item.quantity + 1 }
+              ? { ...item, quantity: item.quantity + quantity }
               : item
           );
         }
-        return [...prev, { ...product, quantity: 1, selectedVariant: variant }];
+        return [...prev, { ...product, quantity: quantity, selectedVariant: variant }];
       });
     } catch (error) {
       console.error('Failed to add to cart:', error);
@@ -280,7 +312,16 @@ const App: React.FC = () => {
       isAuthModalOpen,
       setAuthModalOpen
     }}>
-      <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, updateItemVariant }}>
+      <CartContext.Provider value={{ 
+        cart, 
+        toast,
+        addToCart, 
+        showSuccessToast,
+        removeFromCart, 
+        updateQuantity, 
+        clearCart, 
+        updateItemVariant 
+      }}>
         <Router>
           <ScrollToTop />
           <AppRoutes />

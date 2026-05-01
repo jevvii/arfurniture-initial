@@ -902,7 +902,29 @@ export const ProductManager: React.FC = () => {
                         </button>
                       )}
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
+                      {/* Wood Presets */}
+                      <div className="flex flex-wrap gap-2 pb-2 border-b border-slate-100">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest w-full mb-1">Wood Presets</span>
+                        {[
+                          { name: 'Narra', color: '#9A3E2B' },
+                          { name: 'Kamagong', color: '#1A0F0D' },
+                          { name: 'Acacia', color: '#72503A' },
+                          { name: 'Molave', color: '#E3C58E' },
+                          { name: 'Mahogany', color: '#6E261E' },
+                        ].map(wood => (
+                          <button
+                            key={wood.name}
+                            type="button"
+                            onClick={() => setNewVariant(prev => ({ ...prev, name: wood.name, color: wood.color }))}
+                            className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-white border border-slate-200 hover:border-indigo-400 transition-all text-[10px] font-medium text-slate-600"
+                          >
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: wood.color }}></span>
+                            {wood.name}
+                          </button>
+                        ))}
+                      </div>
+
                       <div className="flex items-center gap-2">
                         <input
                           placeholder="Name (e.g. Red)"

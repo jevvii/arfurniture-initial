@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { ShoppingBag, Menu, X, Hexagon, User as UserIcon, LogOut, LogIn, Search, Bell, CheckCircle2 } from 'lucide-react';
+import { ShoppingBag, Menu, X, Hexagon, User as UserIcon, LogOut, LogIn, Search, Bell, CheckCircle2, CheckCircle } from 'lucide-react';
 import { UserRole } from '../types';
 import { APP_NAME, NAV_ITEMS_ADMIN, resolveAssetUrl, getApiBaseUrl } from '../constants';
 import { useCart } from '../contexts/CartContext';
@@ -16,7 +16,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { cart } = useCart();
+  const { cart, toast } = useCart();
   const { user, logout, setAuthModalOpen, isAuthModalOpen } = useAuth();
 
   const [searchInput, setSearchInput] = useState(searchParams.get('q') || '');
@@ -499,6 +499,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
           </div>
         </footer>
+      )}
+
+      {/* Global Toast Notification */}
+      {toast?.show && (
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[100] animate-in zoom-in duration-300">
+          <div className="bg-slate-900/95 backdrop-blur text-white px-8 py-6 rounded-2xl shadow-2xl flex flex-col items-center gap-4 min-w-[280px] border border-white/10">
+            <div className="bg-green-500 p-3 rounded-full shadow-lg shadow-green-500/20">
+              <CheckCircle className="w-8 h-8 text-white" />
+            </div>
+            <div className="text-center">
+              <h4 className="font-bold text-lg">Added to Cart</h4>
+              <p className="text-slate-400 text-sm mt-1">{toast.productName}</p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

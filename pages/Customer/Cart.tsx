@@ -578,7 +578,11 @@ export const Cart: React.FC = () => {
                                             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2 mb-4">Shipping Address</h3>
                                             
                                             {user && (
-                                                <div className="mb-6">
+                                                <div className="mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                                                    <div className="flex items-center justify-between mb-4">
+                                                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Saved Addresses</h4>
+                                                        <span className="text-[10px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full font-bold">Fast Checkout</span>
+                                                    </div>
                                                     <AddressManager 
                                                         userId={user._id}
                                                         selectedAddressId={selectedAddressId} 
@@ -595,14 +599,6 @@ export const Cart: React.FC = () => {
                                                             }));
                                                         }}
                                                     />
-                                                    <div className="relative my-4">
-                                                        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                                                            <div className="w-full border-t border-gray-300"></div>
-                                                        </div>
-                                                        <div className="relative flex justify-center">
-                                                            <span className="px-2 bg-white text-sm text-gray-500">Or enter manually</span>
-                                                        </div>
-                                                    </div>
                                                 </div>
                                             )}
 
