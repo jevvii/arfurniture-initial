@@ -6,7 +6,7 @@ import { DashboardStats } from '../../types';
 import { CURRENCY } from '../../constants';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, BarChart, Bar, Legend, Label
+  PieChart, Pie, Cell, BarChart, Bar, Legend, Label, LabelList
 } from 'recharts';
 import { Link } from 'react-router-dom';
 
@@ -279,6 +279,7 @@ export const AdminDashboard: React.FC = () => {
                   radius={[0, 10, 10, 0]} 
                   barSize={24}
                 >
+                    <LabelList dataKey="count" position="right" style={{ fill: '#475569', fontSize: 10, fontWeight: 700 }} formatter={(v: any) => `${v} items`} />
                     {stats?.topCategories.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />
                     ))}

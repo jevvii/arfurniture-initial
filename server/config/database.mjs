@@ -485,49 +485,51 @@ class SupabaseCollection {
           const groupById = stage.$group._id
           const groups = new Map()
 
+          let extractKey
           if (groupById === null) {
-            // Special case: Single group for all documents
-            const result = { _id: null }
-            for (const [key, op] of Object.entries(stage.$group)) {
-              if (key === '_id') continue
-              if (op.$sum) {
-                const sumField = typeof op.$sum === 'string' ? String(op.$sum).replace(/^\$/, '') : null
-                result[key] = documents.reduce((acc, doc) => {
-                  if (op.$sum === 1) return acc + 1
-                  if (!sumField) return acc // Should not happen with op.$sum === 1 check above
-                  const [val] = getValuesByPath(doc, sumField)
-                  return acc + Number(val || 0)
-                }, 0)
-              }
-            }
-            documents = [result]
+            extractKey = () => null
           } else if (typeof groupById === 'string' && groupById.startsWith('$')) {
-            // Group by a field
             const fieldName = groupById.slice(1)
-            for (const doc of documents) {
-              const [key] = getValuesByPath(doc, fieldName)
-              const groupKey = key ?? 'null'
-              if (!groups.has(groupKey)) {
-                groups.set(groupKey, { _id: groupKey })
-              }
-              const group = groups.get(groupKey)
-              
-              for (const [opKey, op] of Object.entries(stage.$group)) {
-                if (opKey === '_id') continue
-                if (op.$sum) {
-                  const sumField = typeof op.$sum === 'string' ? String(op.$sum).replace(/^\$/, '') : null
-                  const current = group[opKey] || 0
-                  if (op.$sum === 1) {
-                    group[opKey] = current + 1
-                  } else if (sumField) {
-                    const [val] = getValuesByPath(doc, sumField)
-                    group[opKey] = current + Number(val || 0)
-                  }
+            extractKey = (doc) => {
+              const [val] = getValuesByPath(doc, fieldName)
+              return val ?? 'null'
+            }
+          } else if (isPlainObject(groupById) && groupById.$dateToString) {
+            const fieldName = groupById.$dateToString.date.replace(/^\$/, '')
+            extractKey = (doc) => {
+              const [val] = getValuesByPath(doc, fieldName)
+              if (!val) return 'null'
+              const d = new Date(val)
+              if (Number.isNaN(d.getTime())) return 'null'
+              // Default to YYYY-MM-DD
+              return d.toISOString().split('T')[0]
+            }
+          } else {
+            extractKey = () => 'null'
+          }
+
+          for (const doc of documents) {
+            const groupKey = extractKey(doc)
+            if (!groups.has(groupKey)) {
+              groups.set(groupKey, { _id: groupKey })
+            }
+            const group = groups.get(groupKey)
+            
+            for (const [opKey, op] of Object.entries(stage.$group)) {
+              if (opKey === '_id') continue
+              if (op.$sum) {
+                const current = Number(group[opKey] || 0)
+                if (op.$sum === 1) {
+                  group[opKey] = current + 1
+                } else if (typeof op.$sum === 'string' && op.$sum.startsWith('$')) {
+                  const sumField = op.$sum.slice(1)
+                  const [val] = getValuesByPath(doc, sumField)
+                  group[opKey] = current + Number(val || 0)
                 }
               }
             }
-            documents = Array.from(groups.values())
           }
+          documents = Array.from(groups.values())
         } else if (stage.$sort) {
           documents = sortDocuments(documents, stage.$sort)
         } else if (stage.$limit) {

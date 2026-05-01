@@ -74,13 +74,16 @@ router.get('/dashboard-stats', asyncHandler(async (req, res) => {
 
   // Fill in missing days with 0 revenue
   const revenueByDay = []
+  const today = new Date()
+  
   for (let i = 6; i >= 0; i--) {
-    const d = new Date()
+    const d = new Date(today)
     d.setDate(d.getDate() - i)
     const dateStr = d.toISOString().split('T')[0]
     const match = revenueByDayResult.find(r => r.date === dateStr)
+    
     revenueByDay.push({
-      date: new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
       revenue: match ? match.revenue : 0
     })
   }
@@ -90,18 +93,20 @@ router.get('/dashboard-stats', asyncHandler(async (req, res) => {
   const categoryMap = new Map()
   
   productsList.forEach(p => {
-    const cat = p.category || 'Uncategorized'
-    if (!categoryMap.has(cat)) {
-      categoryMap.set(cat, { category: cat, count: 0, totalValue: 0 })
+    const rawCat = (p.category || 'Uncategorized').trim()
+    const normalizedCat = rawCat.charAt(0).toUpperCase() + rawCat.slice(1).toLowerCase()
+    
+    if (!categoryMap.has(normalizedCat)) {
+      categoryMap.set(normalizedCat, { category: normalizedCat, count: 0, totalValue: 0 })
     }
-    const data = categoryMap.get(cat)
+    const data = categoryMap.get(normalizedCat)
     data.count += 1
-    data.totalValue += (p.stock || 0) * (p.price || 0)
+    data.totalValue += (Number(p.stock) || 0) * (Number(p.price) || 0)
   })
   
   const topCategories = Array.from(categoryMap.values())
     .sort((a, b) => b.totalValue - a.totalValue)
-    .slice(0, 5)
+    .slice(0, 10)
 
   // 4. Low stock products
   const lowStockProducts = await products.find(
@@ -116,12 +121,13 @@ router.get('/dashboard-stats', asyncHandler(async (req, res) => {
   allOrders.forEach(order => {
     if (order.items && Array.isArray(order.items)) {
       order.items.forEach(item => {
-        if (!productSales.has(item.productName)) {
-          productSales.set(item.productName, { name: item.productName, salesCount: 0, revenue: 0 })
+        const pName = (item.productName || 'Unknown Product').trim()
+        if (!productSales.has(pName)) {
+          productSales.set(pName, { name: pName, salesCount: 0, revenue: 0 })
         }
-        const stats = productSales.get(item.productName)
-        stats.salesCount += (item.quantity || 0)
-        stats.revenue += (item.quantity || 0) * (item.price || 0)
+        const stats = productSales.get(pName)
+        stats.salesCount += (Number(item.quantity) || 0)
+        stats.revenue += (Number(item.quantity) || 0) * (Number(item.price) || 0)
       })
     }
   })
