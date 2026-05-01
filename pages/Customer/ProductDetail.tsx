@@ -33,24 +33,27 @@ export const ProductDetail: React.FC = () => {
   const { cart, addToCart } = useCart();
   const { user } = useAuth();
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [isStockModalOpen, setIsStockModalOpen] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   // Chat state
   const [chatQuestion, setChatQuestion] = useState('');
   const [chatAnswer, setChatAnswer] = useState('');
   const [isChatting, setIsChatting] = useState(false);
 
-  const isAvailable = (selectedVariant?.stock ?? product?.stock ?? 0) > 0;
-
-  // Calculate max allowed quantity based on stock and items already in cart
-  const getAvailableStockForSelection = () => {
+  const maxAvailable = (selectedVariant?.stock ?? product?.stock ?? 0);
+  
+  const getInCartQuantity = () => {
     if (!product) return 0;
-    const totalStock = selectedVariant?.stock ?? product.stock;
-    const inCart = cart.find(item => 
+    return cart.find(item => 
       item._id === product._id && 
       (selectedVariant ? item.selectedVariant?.id === selectedVariant.id : !item.selectedVariant)
     )?.quantity || 0;
-    return Math.max(0, totalStock - inCart);
   };
+
+  const availableToAdd = Math.max(0, maxAvailable - getInCartQuantity());
+  const isAvailable = maxAvailable > 0;
+  const isLowStock = maxAvailable > 0 && maxAvailable < 5;
 
   useEffect(() => {
     const loadData = async () => {
@@ -130,21 +133,25 @@ export const ProductDetail: React.FC = () => {
   }
 
   const handleAddToCart = async () => {
-    if (!product) return;
+    if (!product || isAddingToCart) return;
     
-    const availableToAdd = getAvailableStockForSelection();
     if (availableToAdd <= 0) {
-      alert("You already have the maximum available stock for this item in your cart.");
+      setIsStockModalOpen(true);
       return;
     }
 
     if (quantity > availableToAdd) {
-        alert(`Only ${availableToAdd} more items can be added to your cart.`);
         setQuantity(availableToAdd);
+        setIsStockModalOpen(true);
         return;
     }
 
-    await addToCart(product, selectedVariant, quantity);
+    setIsAddingToCart(true);
+    try {
+      await addToCart(product, selectedVariant, quantity);
+    } finally {
+      setIsAddingToCart(false);
+    }
   };
 
   if (loading || !product) {
@@ -272,14 +279,18 @@ export const ProductDetail: React.FC = () => {
             <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mt-2 mb-2">{product.name}</h1>
             <div className="flex items-center justify-between mb-8">
               <div className="text-4xl font-bold text-slate-900">{CURRENCY}{product.price.toLocaleString()}</div>
-              <div className={`text-sm font-medium px-3 py-1 rounded-full ${
-                (selectedVariant?.stock ?? product.stock) > 0 
-                  ? 'bg-slate-100 text-slate-600' 
-                  : 'bg-red-50 text-red-600'
+              <div className={`text-sm font-bold px-3 py-1 rounded-full ${
+                !isAvailable 
+                  ? 'bg-red-50 text-red-600' 
+                  : isLowStock 
+                    ? 'bg-orange-50 text-orange-600 animate-pulse' 
+                    : 'bg-slate-100 text-slate-600'
               }`}>
-                {(selectedVariant?.stock ?? product.stock) > 0 
-                  ? `${selectedVariant?.stock ?? product.stock} available` 
-                  : 'Out of Stock'}
+                {!isAvailable 
+                  ? 'Out of Stock' 
+                  : isLowStock 
+                    ? `Only ${maxAvailable} remaining!` 
+                    : `${maxAvailable} available`}
               </div>
             </div>
 
@@ -419,23 +430,25 @@ export const ProductDetail: React.FC = () => {
           {/* Actions */}
           <div className="pt-6 border-t border-slate-200 mt-auto">
             <div className="flex flex-col sm:flex-row gap-4 mb-8">
-              <div className="flex items-center border border-slate-200 rounded-xl overflow-hidden h-[56px] w-fit">
+              <div className={`flex items-center border rounded-xl overflow-hidden h-[56px] w-fit transition-colors ${isLowStock ? 'border-orange-200 bg-orange-50/30' : 'border-slate-200'}`}>
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-4 py-2 hover:bg-slate-50 transition-colors"
+                  disabled={quantity <= 1 || !isAvailable}
+                  className="px-4 py-2 hover:bg-white disabled:opacity-20 transition-all text-slate-600"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="px-6 font-bold text-lg min-w-[60px] text-center">{quantity}</span>
+                <span className={`px-6 font-black text-xl min-w-[60px] text-center ${isLowStock ? 'text-orange-600' : 'text-slate-900'}`}>
+                  {isAvailable ? quantity : 0}
+                </span>
                 <button
                   onClick={() => {
-                    const availableToAdd = getAvailableStockForSelection();
                     if (quantity < availableToAdd) {
                       setQuantity(quantity + 1);
                     }
                   }}
-                  className="px-4 py-2 hover:bg-slate-50 transition-colors"
-                  disabled={quantity >= getAvailableStockForSelection()}
+                  className="px-4 py-2 hover:bg-white disabled:opacity-20 transition-all text-slate-600"
+                  disabled={quantity >= availableToAdd || !isAvailable}
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -443,12 +456,21 @@ export const ProductDetail: React.FC = () => {
 
               <button
                 onClick={handleAddToCart}
-                disabled={!isAvailable}
-                className={`flex-1 flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-bold text-white transition-all shadow-lg active:scale-95 ${isAvailable ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200' : 'bg-slate-400 cursor-not-allowed shadow-none'
-                  }`}
+                disabled={!isAvailable || isAddingToCart}
+                className={`flex-1 flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-bold text-white transition-all shadow-lg active:scale-95 ${
+                  !isAvailable 
+                    ? 'bg-slate-300 cursor-not-allowed shadow-none' 
+                    : isAddingToCart
+                      ? 'bg-indigo-400 cursor-wait'
+                      : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200'
+                }`}
               >
-                <ShoppingCart className="w-5 h-5" />
-                {isAvailable ? 'Add to Cart' : 'Out of Stock'}
+                {isAddingToCart ? (
+                   <RefreshCw className="w-5 h-5 animate-spin" />
+                ) : (
+                   <ShoppingCart className="w-5 h-5" />
+                )}
+                {!isAvailable ? 'Out of Stock' : isAddingToCart ? 'Adding...' : 'Add to Cart'}
               </button>
             </div>
 
@@ -506,6 +528,31 @@ export const ProductDetail: React.FC = () => {
         productId={product._id}
         productName={product.name}
       />
+
+      {/* Stock Limit Modal */}
+      {isStockModalOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in duration-300 border border-slate-100">
+            <div className="p-8 text-center">
+              <div className="w-20 h-20 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Box className="w-10 h-10" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">Stock Limit Reached</h3>
+              <p className="text-slate-500 mb-8 text-sm leading-relaxed">
+                {availableToAdd <= 0 
+                  ? `You already have all ${maxAvailable} available units in your cart.` 
+                  : `We only have ${maxAvailable} units total. You can only add ${availableToAdd} more to your cart.`}
+              </p>
+              <button
+                onClick={() => setIsStockModalOpen(false)}
+                className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all shadow-lg active:scale-95"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
