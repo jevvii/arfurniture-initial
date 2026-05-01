@@ -139,20 +139,19 @@ export const ProductDetail: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
       {/* Full-screen AR Launch Overlay (shown when coming from QR scan) */}
       {showARLaunch && (
-        <div className="fixed inset-0 z-[100] bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-900 flex flex-col items-center justify-center p-6">
-          <div className="text-center max-w-sm">
-            {/* Product preview */}
-            <div className="w-32 h-32 mx-auto mb-6 rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20">
-              <ColorTintedImage
-                src={resolveAssetUrl(selectedVariant?.imageUrl || product.imageUrl)}
-                color={selectedVariant?.color || product.color}
-                alt={product.name}
-                className="w-full h-full"
-              />
-            </div>
+      <div className="fixed inset-0 z-[100] bg-gradient-to-br from-indigo-900 via-slate-900 to-slate-900 flex flex-col items-center justify-center p-6">
+      <div className="text-center max-w-sm">
+      {/* Product preview */}
+      <div className="w-32 h-32 mx-auto mb-6 rounded-2xl overflow-hidden shadow-2xl border-4 border-white/20">
+        <ColorTintedImage
+          src={resolveAssetUrl(product.imageUrl)}
+          color={selectedVariant?.color || product.color}
+          alt={product.name}
+          className="w-full h-full"
+        />
+      </div>
 
-            <h1 className="text-2xl font-bold text-white mb-2">{product.name}</h1>
-            <p className="text-indigo-200 mb-8">Ready to view in your space</p>
+      <h1 className="text-2xl font-bold text-white mb-2">{product.name}</h1>            <p className="text-indigo-200 mb-8">Ready to view in your space</p>
 
             {/* Big AR Launch Button */}
             <button
@@ -198,7 +197,7 @@ export const ProductDetail: React.FC = () => {
             {viewMode === '3d' ? (
               <div className="w-full h-full animate-in fade-in duration-500">
                 <ModelViewerWrapper
-                  src={resolveAssetUrl(selectedVariant?.arModelUrl || product.arModelUrl)}
+                  src={resolveAssetUrl(product.arModelUrl)}
                   poster={activeImage}
                   alt={`3D model of ${product.name}`}
                   color={selectedVariant?.color || product.color}
@@ -293,8 +292,8 @@ export const ProductDetail: React.FC = () => {
                     key={variant.id}
                     onClick={() => {
                       setSelectedVariant(variant);
-                      // Use dedicated variant image if available, otherwise tint the base image
-                      setActiveImage(resolveAssetUrl(variant.imageUrl || product.imageUrl));
+                      // Always use base image and apply tint via ColorTintedImage
+                      setActiveImage(resolveAssetUrl(product.imageUrl));
                     }}
                     className={`group relative w-12 h-12 rounded-full border-2 transition-all ${selectedVariant?.id === variant.id ? 'border-indigo-600 ring-2 ring-indigo-600/20 scale-110' : 'border-slate-200 hover:border-slate-400'
                       }`}

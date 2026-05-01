@@ -77,19 +77,22 @@ async function seedProducts() {
             isFeatured: Math.random() > 0.5,
             isNewArrival: Math.random() > 0.5,
             isSale: Math.random() > 0.8,
-            createdAt: new Date()
+            createdAt: new Date(),
+            variants: [
+              { id: 'v1-' + folder, name: 'Midnight Black', color: '#1A1A1B', stock: 10 },
+              { id: 'v2-' + folder, name: 'Ocean Blue', color: '#1E3A8A', stock: 5 },
+              { id: 'v3-' + folder, name: 'Forest Green', color: '#064E3B', stock: 8 }
+            ]
           }
         }
 
         if (type === '3dmodels' && storagePath.endsWith('.glb')) {
           productGroups[folder].arModelUrl = url
         } else if (type === 'images') {
-          // If it's a primary image (e.g. without 'Generated Image' or 'black sofa')
-          // Let's just pick the first one as imageUrl and the rest as images array
-          if (!productGroups[folder].imageUrl) {
+          // Only use the system-generated timestamped image as the primary image
+          // and ignore manually named variant images (like 'black sofa.png')
+          if (parts[3].match(/^\d+-/)) {
             productGroups[folder].imageUrl = url
-          } else {
-            productGroups[folder].images.push(url)
           }
         }
       }

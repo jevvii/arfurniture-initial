@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import {
   S3Client,
   PutObjectCommand,
+  DeleteObjectCommand,
   DeleteObjectsCommand,
   ListObjectsV2Command
 } from '@aws-sdk/client-s3'
@@ -70,6 +71,7 @@ class StorjSupabaseCompatClient {
           }
 
           try {
+            // Attempt bulk delete first
             await this.client.send(
               new DeleteObjectsCommand({
                 Bucket: activeBucket,
@@ -81,7 +83,31 @@ class StorjSupabaseCompatClient {
             )
             return { data: keys, error: null }
           } catch (error) {
-            return { data: null, error: toErrorPayload(error) }
+            logger.warn('Bulk delete failed, falling back to individual deletes', { error: error.message })
+            
+            // Fallback to individual deletes if bulk fails (e.g. due to MissingContentMD5)
+            const results = []
+            const errors = []
+            
+            for (const key of keys) {
+              try {
+                await this.client.send(
+                  new DeleteObjectCommand({
+                    Bucket: activeBucket,
+                    Key: key
+                  })
+                )
+                results.push(key)
+              } catch (err) {
+                errors.push({ key, error: err.message })
+              }
+            }
+            
+            if (errors.length > 0 && results.length === 0) {
+              return { data: null, error: toErrorPayload(errors[0].error) }
+            }
+            
+            return { data: results, error: null }
           }
         },
 
