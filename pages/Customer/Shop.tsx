@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Product, MarketingBanner } from '../../types';
@@ -49,14 +49,32 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => (
 
 const BannerCarousel: React.FC<{ banners: MarketingBanner[] }> = ({ banners }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const nextSlide = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % banners.length);
+  }, [banners.length]);
+
+  const prevSlide = () => {
+    setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
+  };
+
+  // Auto-slide effect
+  useEffect(() => {
+    if (banners.length <= 1 || isPaused) return;
+
+    const interval = setInterval(nextSlide, 5000); // 5 seconds
+    return () => clearInterval(interval);
+  }, [banners.length, nextSlide, isPaused]);
 
   if (!banners.length) return null;
 
-  const nextSlide = () => setCurrentIndex((prev) => (prev + 1) % banners.length);
-  const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + banners.length) % banners.length);
-
   return (
-    <div className="relative w-full md:h-[320px] h-auto bg-[#fdfbf7] rounded-none md:rounded-xl overflow-hidden mb-12 group border border-slate-100">
+    <div 
+      className="relative w-full md:h-[320px] h-auto bg-[#fdfbf7] rounded-none md:rounded-xl overflow-hidden mb-12 group border border-slate-100"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       <div
         className="flex transition-transform duration-500 ease-in-out h-full"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
