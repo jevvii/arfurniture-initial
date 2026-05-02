@@ -288,7 +288,12 @@ class Database {
         totalProducts: 156,
         pendingOrders: 89,
         activeCustomers: 1234,
-        monthlyRevenue: 458230
+        monthlyRevenue: 458230,
+        ordersByStatus: [],
+        revenueByDay: [],
+        topCategories: [],
+        lowStockProducts: [],
+        topSellingProducts: []
       };
     }
   }

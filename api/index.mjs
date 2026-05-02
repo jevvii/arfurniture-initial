@@ -21,6 +21,7 @@ import cartRoutes from '../server/routes/cart.mjs'
 import addressRoutes from '../server/routes/address.mjs'
 import settingsRoutes from '../server/routes/settings.mjs'
 import notificationRoutes from '../server/routes/notifications.mjs'
+import assetRoutes from '../server/routes/assets.mjs'
 
 const app = express()
 
@@ -50,24 +51,16 @@ app.use(requestLogger)
 // DATABASE & STORAGE INITIALIZATION
 // =====================
 
-const MONGODB_URI = process.env.MONGODB_URI
-const SUPABASE_URL = process.env.SUPABASE_URL
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
-
 let dbInitialized = false
 
 async function ensureInitialized() {
   if (dbInitialized) return
 
-  if (!MONGODB_URI) {
-    throw new Error('MONGODB_URI environment variable is required')
-  }
-
-  await connectDatabase(MONGODB_URI)
+  await connectDatabase()
   const collections = getCollections()
   app.locals.collections = collections
 
-  initializeSupabase(SUPABASE_URL, SUPABASE_KEY)
+  initializeSupabase()
 
   dbInitialized = true
 }
@@ -81,7 +74,7 @@ app.get('/api/health', (req, res) => {
     status: 'healthy',
     timestamp: new Date().toISOString(),
     database: dbInitialized ? 'connected' : 'not yet connected',
-    storage: SUPABASE_URL ? 'configured' : 'not configured'
+    storage: process.env.SUPABASE_URL ? 'configured' : 'not configured'
   })
 })
 
@@ -134,6 +127,7 @@ app.use('/api/cart', cartRoutes)
 app.use('/api/address', addressRoutes)
 app.use('/api/settings', settingsRoutes)
 app.use('/api/notifications', notificationRoutes)
+app.use('/api/assets', assetRoutes)
 
 // =====================
 // ERROR HANDLING
